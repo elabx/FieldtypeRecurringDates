@@ -1,0 +1,103 @@
+<?php namespace ProcessWire;
+
+use RRule\RRule;
+
+/**
+ * FieldtypeEvents: InputfieldEvent
+ *
+ * Collects input for FieldtypeEvents fields. This accompanies the FieldtypeEvents as a demonstration
+ * of creating a multi-value Fieldtype and Inputfield.
+ *
+ */
+class InputfieldRecurringDates extends Inputfield
+{
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setAttribute('type', 'text');
+        $this->setAttribute('size', 50);
+        //$this->setAttribute('maxlength', $this->getDefaultMaxlength());
+        $this->setAttribute('placeholder', '');
+        $this->setAttribute('pattern', '');
+        $this->setAttribute('minlength', 0);
+        $this->set('requiredAttr', 0);
+        $this->set('initValue', ''); // optional initial value
+        $this->set('stripTags', false); // strip tags from input?
+        $this->set('noTrim', false);
+    }
+
+    public function init(){
+        $this->addHookAfter('AdminTheme::getExtraMarkup', function($e){
+           $parts = $e->return;
+           $parts['head'] .= "<script defer src='https://unpkg.com/alpinejs@3.6.0/dist/cdn.min.js'></script>";
+           //bd($parts);
+           $e->return = $parts;
+        });
+        //$alpineSource = "";
+        //$this->config->scripts->add($alpineSource);
+    }
+
+    public static function getModuleInfo()
+    {
+        return array(
+            'title' => 'InputfieldRecurringDates',
+            'version' => 001,
+            'summary' => 'Input field for recurring dates.',
+            'icon' => 'calendar-o',
+            'requires' => 'FieldtypeRecurringDates',
+        );
+    }
+
+
+    public function ___render()
+    {
+        $attrStr = $this->getAttributesString();
+        $out = "<input $attrStr />";
+        $filePath = "{$this->config->paths->siteModules}FieldtypeRecurringDates/partials/AlpineComponent.php";
+        //bd($filePath);
+        $alpineComponent = wireRenderFile($filePath);
+        $out .= $alpineComponent;
+        return $out;
+    }
+
+
+    public function ___renderValue()
+    {
+        $fieldtype = $this->hasFieldtype;
+        return $fieldtype->markupValue($this->hasPage, $this->hasField, $this->value);
+    }
+
+
+    public function ___processInput(WireInputData $input)
+    {
+        $name = $this->attr('name');
+        $recurring_dates = new RecurringDateArray();
+        $value = $input[$name];
+        $page = $this->hasPage;
+        bd($page);
+        bd($value, "rule on input");
+        $existing_rule = $page->meta()->get($name);
+        bd($existing_rule, "rule in meta");
+
+        //if ($existing_rule != $value) {
+            try {
+                $rrule = new RRule($value);
+                bd($rrule);
+                foreach ($rrule as $date) {
+                    bd($date);
+                    $occurrence = new RecurringDate();
+                    $occurrence->date = $date;
+                    bdb($occurrence);
+                    $recurring_dates->add($occurrence);
+                }
+                //bdb($recurring_dates);
+                $page->meta()->set($name, $value);
+            } catch (\Exception $e) {
+                $this->error($e);
+            }
+            $this->attr('value', $recurring_dates);
+            $this->trackChange('value');
+        //}
+    }
+}
