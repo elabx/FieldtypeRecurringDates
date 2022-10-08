@@ -1,16 +1,18 @@
 <?php namespace ProcessWire;
 
+use DateTime;
+
 /**
- * FieldtypeRecurringEvents: RecurrentEvent
+ * FieldtypeRecurringEvents: Occurrence
  *
- * An individual event item to be part of an RecurrentEventArray for a Page
+ * An individual event item to be part of an OccurrenceArray for a Page
  *
- * @property string $date Date string in Y-m-d format
+ * @property DateTime $date  Date string in Y-m-d format
  * @property string $title Title of the event
  * @property bool $formatted
  *
  */
-class RecurringDate extends WireData {
+class Occurrence extends WireData {
 
     /**
      * Construct a new Event
@@ -18,9 +20,9 @@ class RecurringDate extends WireData {
      */
     public function __construct() {
         // define the fields that represent our event (and their default/blank values)
-        //$this->set('date', '');
-        //$this->set('excluded', '');
-        //$this->set('formatted', false);
+        $this->set('date', '');
+        $this->set('excluded', false);
+        $this->set('formatted', false);
         parent::__construct();
     }
 
@@ -38,8 +40,13 @@ class RecurringDate extends WireData {
         } else if($key === 'title') {
             $value = $this->sanitizer->text($value);
         }*/
+        if($key === 'excluded') {
+            $value = false;
+        }
         if($key === 'date') {
-            $value = $value->format('Y-m-d H:i:s');
+            if($value instanceof \DateTime){
+                $value = $value->format('Y-m-d H:i:s');
+            }
         }
         return parent::set($key, $value);
     }

@@ -6,8 +6,7 @@
  * Contains multiple occurrences of an RRule definition
  *
  */
-
-class RecurringDateArray extends WireArray {
+class OccurrenceArray extends WireArray {
 
     /**
      * Is given item valid to store in this EventArray?
@@ -17,7 +16,7 @@ class RecurringDateArray extends WireArray {
      *
      */
     public function isValidItem($item) {
-        return $item instanceof RecurringDate;
+        return $item instanceof Occurrence;
     }
 
     /**

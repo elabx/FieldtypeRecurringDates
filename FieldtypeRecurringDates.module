@@ -1,5 +1,7 @@
 <?php namespace ProcessWire;
 
+use RRule\RRule;
+
 /**
  * FieldtypeEvents
  *
@@ -26,9 +28,30 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      */
     public function __construct() {
-        require_once(__DIR__ . '/RecurringDate.php');
-        require_once(__DIR__ . '/RecurringDateArray.php');
+        //$this->set('usePagination', true);
+        //$this->set('useOrderByCols', true);
+        require_once(__DIR__ . '/Occurrence.php');
+        require_once(__DIR__ . '/OccurrenceArray.php');
         parent::__construct();
+    }
+
+    public function init(){
+
+        $this->addHook('/fieldtype-recurring-dates/get-dates/', function($event){
+            if(!$event->user->isLoggedin()) return;
+            $rrule = json_decode($event->input->get->data, true);
+            $this->getRruleOcurrences();
+            //$page_id = $event->input->get->int('id');
+        });
+    }
+
+    public function ready(){
+        bd($this);
+    }
+
+    public function getRruleOCurrences($value){
+        $rrule = new RRule($value);
+        return $rrule;
     }
 
     /**
@@ -40,7 +63,10 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      */
     public function getDatabaseSchema(Field $field) {
         $schema = parent::getDatabaseSchema($field);
+        /*$schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
+        $schema['keys']['primary'] = 'PRIMARY KEY (id)';*/
         $schema['data'] = 'datetime NOT NULL';
+        $schema['excluded'] = 'tinyint NOT NULL';
         $schema['keys']['data'] = 'KEY data (data)';
         return $schema;
     }
@@ -64,11 +90,11 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @return EventArray
+     * @return OccurrenceArray
      *
      */
     public function getBlankValue(Page $page, Field $field) {
-        return new RecurringDateArray();
+        return new OccurrenceArray();
     }
 
 
@@ -108,9 +134,26 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      */
     public function ___wakeupValue(Page $page, Field $field, $value) {
-        //bd($value);
-        $rrule = $page->meta()->get($field->name);
-        return $rrule;
+
+        // start a blank value to be populated
+        $occurrences = $this->getBlankValue($page, $field);
+
+        // if we were given a blank value, then we've got nothing to do: just return a blank EventArray
+        if(empty($value) || !is_array($value)) return $occurrences;
+
+        // create new Event objects from each item in the array
+        foreach($value as $v) {
+            $occurrence = new Occurrence();
+            $occurrence->date = $v['data']; // note we're converting 'data' to 'date'
+            $occurrence->excluded = $v['excluded'] ? true : false;
+            $occurrence->resetTrackChanges();
+            $occurrences->add($occurrence);
+        }
+
+        // tell it to start tracking changes from this point forward
+        $occurrences->resetTrackChanges();
+
+        return $occurrences;
     }
 
     /**
@@ -118,32 +161,31 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @param EventArray $value
+     * @param array $value
      * @return array
      *
      */
     public function ___sleepValue(Page $page, Field $field, $value) {
-        $sleepValue = array();
-        if(!$value instanceof RecurringDateArray) return $sleepValue;
 
-        //bd($value);
+        $sleepValue = array();
+
+
+        if(!$value instanceof OccurrenceArray) return $sleepValue;
         // make the events sort by date ascending
         $value->sort('date');
+
         // convert each Event to an array within sleepValue
-        foreach($value as $event) {
-            bdb($event);
+        foreach($value as $occurrence) {
             // if no date specified then skip it
-            if(!$event->date) continue;
+            if(!$occurrence->date) continue;
 
             // if event is formatted, fail, we we don't want entity-encoded text in DB
-            if($event->formatted) throw new WireException('Formatted events cannot be saved');
-
+            if($occurrence->formatted) throw new WireException('Formatted events cannot be saved');
             $sleepValue[] = array(
-                'data' => $event->date // note: 'date' is becoming 'data' (with an 'a')
-                //'title' => $event->title
+              'data' => $occurrence->date, // note: 'date' is becoming 'data' (with an 'a')
+              'excluded' => $occurrence->excluded
             );
         }
-        bd($sleepValue);
         return $sleepValue;
     }
 
@@ -161,16 +203,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      */
     public function ___formatValue(Page $page, Field $field, $value) {
         // make a new copy with formatted events (i.e. entity-encoded titles)
-        $events = $this->getBlankValue($page, $field);
-        /*foreach($value as $event) {
-            if(!$event->formatted) {
-                $event = clone $event;
-                $event->title = $this->sanitizer->entities($event->title);
-                $event->formatted = true;
-            }
-            $events->add($event);
-        }*/
-        return $events;
+        return $value;
     }
 
     /**
@@ -198,6 +231,14 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         return "<ul><li>" . implode("</li><li>", $a) . "</li></ul>";
     }
 
+    public function getMonths(){
+        $months = [];
+        for ($m=1; $m<=12; $m++) {
+            $months[] = date('F', mktime(0,0,0,$m, 1, date('Y')));
+        }
+        //bd($months);
+        return $months;
+    }
 
     /**
      * Method called when the field is database-queried from a $pages->find() selector
@@ -250,5 +291,15 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         $info['subfields']['data']['label'] = $this->_('Date');
         return $info;
     }*/
+
+    public function ___loadPageField(Page $page, Field $field)
+    {   //bd($field);
+        //$field->set('paginationLimit', 2);
+        $input = $this->wire()->input;
+
+        $value =  parent::___loadPageField($page, $field); // TODO: Change the autogenerated stub
+        bd($value);
+        return $value;
+    }
 
 }
