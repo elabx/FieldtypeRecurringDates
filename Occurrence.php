@@ -51,6 +51,10 @@ class Occurrence extends WireData {
         return parent::set($key, $value);
     }
 
+    public function formatDate($format = "U"){
+        $this->date = $this->date->format($format);
+    }
+
     /**
      * Return a string representing this event
      *
@@ -58,6 +62,6 @@ class Occurrence extends WireData {
      *
      */
     public function __toString() {
-        return "$this->date: $this->title";
+        return "$this->date";
     }
 }

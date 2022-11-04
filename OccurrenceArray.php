@@ -15,6 +15,11 @@ class OccurrenceArray extends WireArray {
      * @return bool
      *
      */
+    public function makeBlankItem()
+    {
+        return $this->wire(new Occurrence());
+    }
+
     public function isValidItem($item) {
         return $item instanceof Occurrence;
     }

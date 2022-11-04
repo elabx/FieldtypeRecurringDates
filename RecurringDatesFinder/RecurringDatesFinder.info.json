@@ -1,0 +1,15 @@
+{
+  "title": "Recurring Dates Finder",
+  "version": "0.0.1",
+  "summary": "Helper module to find recurring events",
+  "author": "Eduardo San Miguel García",
+  "href": "",
+  "installs": [
+    "FieldtypeRecurringDates"
+  ],
+  "requires": [
+    "PHP>=7.0.0",
+    "ProcessWire>=3.0.0",
+    "FieldtypeRecurringDates"
+  ]
+}

@@ -1,0 +1,73 @@
+<?php namespace ProcessWire;
+class RecurringDatesFinder extends WireData implements Module {
+
+    public function find($start = null, $end = null, $options = array()) {
+        $default = [
+          'fields' => '',
+        ];
+
+        $options = array_merge($default, $options);
+
+        $start = $this->sanitizer->date($start);
+        $end = $this->sanitizer->date($end);
+
+        if($start)
+            $start = $this->datetime('Y-m-d H:i:s', $start);
+        if($end)
+            $end = $this->datetime('Y-m-d H:i:s', $end);
+        if($options['fields']){
+            $selected_fields = $this->sanitizer->arrayVal($options['fields']);
+            $recurring_fields = $this->fields->find($selected_fields);
+        }else {
+            $recurring_fields = $this->fields->find('type=FieldtypeRecurringDates');
+        }
+
+        //bd($recurring_fields);
+        $sql = new WireArray;
+        /** @var Field $field */
+        foreach($recurring_fields as $field){
+            $table = $field->getTable();
+
+            /** @var DatabaseQuerySelect $subquery */
+            $subquery = new DatabaseQuerySelect();
+            $subquery = $subquery->select('pages_id')
+              ->select('data')
+              ->from($table);
+            if($start){
+                $subquery->where('data >= :start');
+
+            }
+            if($end){
+                $subquery->where('data <= :end')
+                  ->bindValue(':end', $end);
+            }
+            $sql->add($subquery);
+        }
+        bd($sql);
+        if($sql->count() > 1){
+            /*$sql = implode(' UNION ', $sql);
+            bd($sql);*/
+            $union_query = "";
+            $union_query = $sql->implode("UNION ", function($item) use ($union_query){
+                bd($item->getQuery());
+                return $item->getQuery();
+            });
+
+            $pdo = $this->database->prepare($union_query);
+            $pdo->bindValue(':start', $start);
+            $pdo->bindValue(':end', $end);
+            $pdo->execute();
+            return $pdo->fetchAll(\PDO::FETCH_ASSOC);
+
+        }else{
+            if($start)
+                $sql[0]->bindValue(':start', $start);
+            if($end)
+                $sql[0]->bindValue(':end', $end);
+            $result = $sql[0]->execute();
+            return $result->fetchAll(\PDO::FETCH_ASSOC);
+        }
+
+        //echo $q->getQuery() . PHP_EOL;
+    }
+}

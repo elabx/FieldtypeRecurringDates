@@ -22,14 +22,17 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
             'installs' => 'InputfieldRecurringDates',
         );
     }
-
+    const EXTRAS_TABLE_NAME_SUFFIX =  '_extras';
     /**
      * Construct the Fieldtype, make sure all dependencies are in place
      *
      */
+
     public function __construct() {
-        //$this->set('usePagination', true);
-        //$this->set('useOrderByCols', true);
+        $this->set('usePagination', true);
+        $this->set('useOrderByCols', true);
+        require_once(__DIR__ . '/RecurringDatesSettings.php');
+        require_once(__DIR__ . '/RecurringDate.php');
         require_once(__DIR__ . '/Occurrence.php');
         require_once(__DIR__ . '/OccurrenceArray.php');
         parent::__construct();
@@ -43,11 +46,61 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
             $this->getRruleOcurrences();
             //$page_id = $event->input->get->int('id');
         });
+
+        $this->addHookAfter('Fields::added', $this, 'hookAfterFieldAdded');
+        $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
+
     }
 
     public function ready(){
         bd($this);
     }
+
+    /**
+     * Adds the rrule database table
+     *
+     * @return void
+     *
+     */
+    public function hookAfterFieldAdded($event){
+        $item = $event->arguments(0);
+        if($item->type->name == $this->name) {
+            $table_name = $this->getExtrasTableName($item);
+            $create_rrules_table = "";
+            $create_rrules_table .=
+              "DROP TABLE IF EXISTS $table_name;" .
+              "CREATE TABLE $table_name (" .
+              "pages_id INT UNSIGNED NOT NULL, " .
+              "rrule MEDIUMTEXT NOT NULL," .
+              "settings MEDIUMTEXT NOT NULL," .
+              "PRIMARY KEY (`pages_id`)," .
+              "UNIQUE KEY (`pages_id`)".
+              ")";
+            try {
+                $query = $this->database->prepare($create_rrules_table);
+                $query->execute();
+            } catch (\Exception $e) {
+                $this->database->error($e->getMessage());
+            }
+        }
+    }
+
+    public function hookAfterFieldDeleted($event){
+        $item = $event->arguments(0);
+        if($item->type->name == $this->name) {
+            $table_name = $this->getExtrasTableName($item);
+            $create_rrules_table = "";
+            $create_rrules_table .= "DROP TABLE IF EXISTS $table_name;";
+            try {
+                $query = $this->database->prepare($create_rrules_table);
+                $query->execute();
+            } catch (\Exception $e) {
+                $this->database->error($e->getMessage());
+            }
+        }
+    }
+
+
 
     public function getRruleOCurrences($value){
         $rrule = new RRule($value);
@@ -55,7 +108,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
     }
 
     /**
-     * Return the database schema that defines an Event
+     * Return the database schema that defines an Ocurrence
      *
      * @param Field $field
      * @return array
@@ -63,8 +116,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      */
     public function getDatabaseSchema(Field $field) {
         $schema = parent::getDatabaseSchema($field);
-        /*$schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
-        $schema['keys']['primary'] = 'PRIMARY KEY (id)';*/
+        $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
+        $schema['keys']['primary'] = 'PRIMARY KEY (id)';
         $schema['data'] = 'datetime NOT NULL';
         $schema['excluded'] = 'tinyint NOT NULL';
         $schema['keys']['data'] = 'KEY data (data)';
@@ -77,7 +130,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @return Inputfield|InputfieldEvents
+     * @return Inputfield|InputfieldRecurringDates
      *
      */
     public function getInputfield(Page $page, Field $field) {
@@ -90,11 +143,12 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @return OccurrenceArray
+     * @return RecurringDate
      *
      */
     public function getBlankValue(Page $page, Field $field) {
-        return new OccurrenceArray();
+        return new RecurringDate();
+        //return new OccurrenceArray();
     }
 
 
@@ -129,31 +183,35 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @param array $value
+     * @param RecurringDate $value
      //* @return EventArray
      *
      */
     public function ___wakeupValue(Page $page, Field $field, $value) {
 
-        // start a blank value to be populated
-        $occurrences = $this->getBlankValue($page, $field);
+        $recurring_date = $this->getBlankValue($page, $field);
+        //bd($recurring_date->settings->getArray());
+        $recurring_date->settings = json_encode($recurring_date->settings, true);
+        //bd($recurring_date->settings);
+        if(empty($value) || !is_array($value)) return $recurring_date;
+        $settings = $this->getSettings($page, $field);
+        $recurring_date->rrule = $settings->rrule;
 
-        // if we were given a blank value, then we've got nothing to do: just return a blank EventArray
-        if(empty($value) || !is_array($value)) return $occurrences;
+        $recurring_date->settings = $settings->settings;
 
-        // create new Event objects from each item in the array
         foreach($value as $v) {
             $occurrence = new Occurrence();
-            $occurrence->date = $v['data']; // note we're converting 'data' to 'date'
+            $occurrence->date = (new \DateTime($v['data']));
             $occurrence->excluded = $v['excluded'] ? true : false;
             $occurrence->resetTrackChanges();
-            $occurrences->add($occurrence);
+            $recurring_date->occurrences->add($occurrence);
+            //$occurrences->add($occurrence);
         }
 
         // tell it to start tracking changes from this point forward
-        $occurrences->resetTrackChanges();
-
-        return $occurrences;
+        $recurring_date->occurrences->resetTrackChanges();
+        bd($recurring_date,  'wakupValue');
+        return $recurring_date;
     }
 
     /**
@@ -169,13 +227,16 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
 
         $sleepValue = array();
 
-
-        if(!$value instanceof OccurrenceArray) return $sleepValue;
+        if(!$value instanceof RecurringDate) return $sleepValue;
         // make the events sort by date ascending
-        $value->sort('date');
+        $value->occurrences->sort('date');
+
+        bd($value->settings);
+
+        $this->saveSettings($page, $field, $value);
 
         // convert each Event to an array within sleepValue
-        foreach($value as $occurrence) {
+        foreach($value->occurrences as $occurrence) {
             // if no date specified then skip it
             if(!$occurrence->date) continue;
 
@@ -186,6 +247,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
               'excluded' => $occurrence->excluded
             );
         }
+
         return $sleepValue;
     }
 
@@ -203,6 +265,9 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      */
     public function ___formatValue(Page $page, Field $field, $value) {
         // make a new copy with formatted events (i.e. entity-encoded titles)
+        /*foreach($value->ocurrences as $i => $ocurrence){
+            $ocurrence->formatDate('U');
+        }*/
         return $value;
     }
 
@@ -296,10 +361,48 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
     {   //bd($field);
         //$field->set('paginationLimit', 2);
         $input = $this->wire()->input;
-
         $value =  parent::___loadPageField($page, $field); // TODO: Change the autogenerated stub
-        bd($value);
         return $value;
+    }
+
+    /**
+     * Saves rrule string when field is saved.
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param string $rule
+     * @return void
+     */
+    protected function saveSettings(Page $page, Field $field, RecurringDate $rdate){
+        $sql = "INSERT INTO {$this->getExtrasTableName($field)} (pages_id, rrule, settings) VALUES(:pages_id, :rrule, :settings) ON DUPLICATE KEY UPDATE pages_id=:pages_id, rrule=:rrule, settings=:settings";
+        /** @var \PDOStatement $pdo */
+        $pdo = $this->database->prepare($sql);
+        $pdo->bindValue(':pages_id', $page->id);
+        //bd($this->serializeSettings());
+        $pdo->bindValue(':rrule', $rdate->rrule);
+        bd((string)$rdate->settings);
+        $pdo->bindValue(':settings', (string) $rdate->settings);
+        bd($pdo->queryString);
+        $pdo->execute();
+    }
+
+    /**
+     * Get rrule when field. Used on wareup value.
+     *
+     * @param Page $page
+     * @param Field $field
+     * @return string
+     */
+    protected function getSettings(Page $page, Field $field){
+        $sql = "SELECT rrule, settings FROM {$this->getExtrasTableName($field)} WHERE pages_id=:pages_id";
+        $pdo = $this->database->prepare($sql);
+        $pdo->bindValue(':pages_id', $page->id);
+        $pdo->execute();
+        return $pdo->fetch(\PDO::FETCH_OBJ);
+    }
+
+    public function getExtrasTableName($field){
+        return $field->getTable() . self::EXTRAS_TABLE_NAME_SUFFIX;
     }
 
 }
