@@ -1,6 +1,7 @@
 <?php namespace ProcessWire;
 
 use DateTime;
+use RRule\RRule;
 
 /**
  * FieldtypeRecurringEvents: Occurrence
@@ -8,7 +9,7 @@ use DateTime;
  * An individual event item to be part of an OccurrenceArray for a Page
  *
  * @property OccurrenceArray $occurences
- * @property string $rrule RRule in JSON format;
+ * @property RRule $rrule RRule in JSON format;
  * @property bool $formatted
  *
  */
@@ -24,7 +25,7 @@ class RecurringDate extends WireData
         // define the fields that represent our event (and their default/blank values)
         $this->set('occurrences', new OccurrenceArray());
         $this->set('settings', new RecurringDatesSettings());
-        $this->set('rrule', '');
+        $this->set('rrule', null);
         parent::__construct();
     }
 
@@ -46,14 +47,7 @@ class RecurringDate extends WireData
             return parent::set($key, $value);
 
         }
-    }
-
-    public function serializeSettings()
-    {
-        return json_encode([
-          'settings' => json_encode($settings),
-          'rrule'    => $this->rrule
-        ]);
+        return $this;
     }
 
     /**
@@ -64,6 +58,6 @@ class RecurringDate extends WireData
      */
     public function __toString()
     {
-        return $this->ocurrences;
+        return (string) $this->occurrences;
     }
 }

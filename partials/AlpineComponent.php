@@ -4,9 +4,9 @@
 /** @var $fieldtype FieldtypeRecurringDates */
 /** @var $sanitizer Sanitizer */
 ?>
-<div defer-x-data="recurringDatesInput">
+<div data-inputfield-name="<?=$inputfield->name?>" defer-x-data="recurringDatesInput">
     <input <?= $inputfield->getAttributesString() ?>>
-    <input x-model="_settings" type="text" name="<?=$inputfield->name?>_settings">
+    <input x-model="_settings" type="hidden" name="<?=$inputfield->name?>_settings">
     <?php
     $pre_text =  htmlspecialchars($inputfield->getAttribute('data-json-rrule'), ENT_QUOTES, "UTF-8")
     ?>
@@ -14,7 +14,8 @@
         <?php /*echo $pre_text; */?>
     </pre>-->
 
-    <div class="uk-margin-medium-top uk-grid-divider uk-grid uk-child-width-1-2" uk-grid>
+    <div class="uk-grid-divider uk-grid uk-child-width-1-2" uk-grid>
+
         <div>
             <div class="uk-space-between uk-flex-left uk-grid" uk-grid>
                 <div>
@@ -50,14 +51,15 @@
                 </div>
 
                 <div class="uk-margin-top uk-width-1-1">
-                    <div class="uk-child-width-1-2 uk-grid" uk-grid>
+                    <div class="uk-child-width-1-2 uk-grid-small uk-grid" uk-grid>
                         <div class="uk-width-1-1">
                             <div class="uk-form-controls">
-                                <label><input class="uk-radio"
+                                <label>
+                                    <input class="uk-radio"
                                               type="radio"
                                               x-model="settings.limit_mode"
                                               value="count"
-                                              name="limit-rule-options">
+                                              :name="`limit-rule-options-${inputfield}`">
                                     Count
                                 </label><br>
                                 <label>
@@ -65,26 +67,28 @@
                                               type="radio"
                                               x-model="settings.limit_mode"
                                                value="until"
-                                              name="limit-rule-options">
+                                              :name="`limit-rule-options-${inputfield}`">
                                     Until specific date
                                 </label>
                             </div>
                         </div>
-                        <div x-show="settings.limit_mode === 'count'" class="limit-rule-options-wrapper">
-                            <label for="<?=$this->name?>-count">After</label>
-                            <input x-model.number="rrule.COUNT"
-                                   min="1"
-                                   value="1"
-                                   class="uk-input"
-                                   type="number"> Times(s)
-                        </div>
-                        <div x-show="settings.limit_mode === 'until'" class="">
-                            <label for="<?=$this->name?>-until"
-                                   class="uk-form-label">On date</label>
-                            <input value=""
-                                   class="uk-input"
-                                    x-model="rrule.UNTIL"
-                                   type="datetime-local">
+                        <div class="">
+                            <div x-show="settings.limit_mode === 'count'" class="limit-rule-options-wrapper">
+                                <label class="uk-form-label" for="<?= $this->name ?>-count">After</label>
+                                <input x-model.number="rrule.COUNT"
+                                       min="1"
+                                       value="1"
+                                       class="uk-input"
+                                       type="number"> <span class="uk-form-label">Times(s)</span>
+                            </div>
+                            <div x-cloak x-show="settings.limit_mode === 'until'" class="">
+                                <label for="<?= $this->name ?>-until"
+                                       class="uk-form-label">On date</label>
+                                <input value=""
+                                       class="uk-input"
+                                       x-model="rrule.UNTIL"
+                                       type="datetime-local">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -94,6 +98,7 @@
 
             <span class="uk-form-label">Filter by:</span>
             <div class="uk-margin-top" >
+
                 <ul class="uk-list-divider uk-list">
                     <template x-for="filter in catalogues.filters">
                         <li  x-id="['filter-input']" class="uk-form-controls uk-form-controls-text">
@@ -102,9 +107,10 @@
                                    :value="filter.value"
                                    class="uk-checkbox"
                                    type="checkbox">
+
                             <label :for="$id('filter-input', filter.value)"
-                                   x-text="filter.text"></label>
-                                <div :id=" 'filter-' + filter.value"></div>
+                                   x-text="filter.label"></label>
+                                <div :id="`filter-${filter.value}-${inputfield}`"></div>
 
                         </li>
                     </template>
@@ -112,7 +118,7 @@
             </div>
 
 
-            <template x-teleport="#filter-BYDAY" >
+            <template x-teleport="#filter-BYDAY-<?=$inputfield->name?>" >
                 <div class="uk-margin-top"
                      x-cloak
                      x-show="settings.filters.includes('BYDAY')">
@@ -121,9 +127,9 @@
                         <div class="uk-grid uk-grid-small" uk-grid>
                             <template x-for="day in catalogues.daysOfWeek">
                                 <div>
-                                    <label :for="$id('day-input', day.abbreviation)"
-                                           x-text="day.abbreviation"></label>
-                                    <input :id="$id('day-input', day.abbreviation)"
+                                    <label :for="$id('day-input', day.name)"
+                                           x-text="day.name"></label>
+                                    <input :id="$id('day-input', day.name)"
                                            x-model.number="rrule.BYDAY"
                                            :value="day.value"
                                            class="uk-checkbox"
@@ -136,7 +142,7 @@
             </template>
 
 
-            <template x-teleport="#filter-BYMONTH">
+            <template x-teleport="#filter-BYMONTH-<?=$inputfield->name?>">
                 <div>
                     <div class="uk-margin-top"
                          x-cloak
@@ -163,7 +169,7 @@
             </template>
 
 
-            <template x-teleport="#filter-BYMONTHDAY">
+            <template x-teleport="#filter-BYMONTHDAY-<?=$inputfield->name?>">
                 <div class="uk-margin-top"
                      x-cloak
                      x-show="settings.filters.includes('BYMONTHDAY')">
@@ -190,17 +196,17 @@
 
         </div>
     </div>
-    <div class="uk-margin-large">
+    <div class="uk-margin">
         <div class="uk-box-shadow-small ">
             <div class="uk-grid" uk-grid>
-
                 <div class="uk-width-1-1 ">
                     <div x-on:click="show_table = !show_table"
                          class="uk-flex uk-padding-small uk-flex-middle uk-flex-between">
                         <div>
                             <i class="uk-margin-small-right" uk-icon="list">
                                 <?php /** @var $occurrences RecurringDate */ ?>
-                            </i>Count: <?= $occurrences->count ?>
+                            </i>
+                            <?=$inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : ""?>
                         </div>
                         <div>
                             <button class="ui-button" type="button" >
@@ -212,19 +218,17 @@
 
                 <div x-cloak x-show="show_table" class="uk-width-1-1">
                     <hr class="uk-margin uk-margin-top">
+
                     <table class="uk-table uk-table-small uk-table-divider" id="<?= $inputfield->name ?>_ocurrences"
                            class="uk-table-small uk-table uk-table-striped">
                         <thead>
                         <tr>
-
-                            <th>Date RFC</th>
                             <th>Date</th>
                             <th>Exclude</th>
                         </tr>
                         </thead>
                         <?php foreach ($occurrences as $i => $d): ?>
                             <tr>
-                                <td><?= date("r", $d->date) ?></td>
                                 <td><?= $d ?></td>
                                 <td>
                                     <input id="input-<?= $i ?>" type="checkbox">
@@ -232,9 +236,9 @@
                             </tr>
                         <?php endforeach ?>
                     </table>
+
                 </div>
             </div>
         </div>
-
     </div>
 </div>

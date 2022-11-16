@@ -1,14 +1,10 @@
 function initInputfieldRecurringDates(root) {
-
     if (root === undefined) {
         root = document;
     }
-    // console.log(root);
     let components = root.querySelectorAll("[defer-x-data]");
-    // console.log(components);
     components.forEach(function (component) {
         // https://github.com/alpinejs/alpine/issues/359#issuecomment-973688464
-        // console.log(component);
         let alpineComponent = component.getAttribute('defer-x-data');
         Alpine.mutateDom(function () {
             component.setAttribute('x-data', alpineComponent);
@@ -16,8 +12,6 @@ function initInputfieldRecurringDates(root) {
         Alpine.initTree(component);
         component.removeAttribute('defer-x-data');
     });
-
-
 }
 
 jQuery(document).ready(function () {
@@ -32,6 +26,7 @@ jQuery(document).on('reloaded', '.InputfieldRepeaterItem', function (event) {
 document.addEventListener('alpine:init', (e) => {
     Alpine.data('recurringDatesInput', function () {
         return {
+            inputfield: '',
             _rrule: null,
             rrule: {
                 DTSTART: "",
@@ -55,58 +50,49 @@ document.addEventListener('alpine:init', (e) => {
             show_table: false,
             catalogues: {
                 filters: [
-                    {text: "By month", value: 'BYMONTH'},
-                    {text: "By day of the week", value: 'BYDAY'},
-                    {text: "By day of the month", value: 'BYMONTHDAY'},
+                    {label: "By month", value: 'BYMONTH'},
+                    {label: "By day of the week", value: 'BYDAY'},
+                    {label: "By day of the month", value: 'BYMONTHDAY'},
                 ],
                 daysOfWeek: [
-                    {abbreviation: 'Sunday', value: 'SU'},
-                    {abbreviation: 'Monday', value: 'MO'},
-                    {abbreviation: 'Tuesday', value: 'TU'},
-                    {abbreviation: 'Wednesday', value: 'WE'},
-                    {abbreviation: 'Thursday', value: 'TH'},
-                    {abbreviation: 'Friday', value: 'FR'},
-                    {abbreviation: 'Saturday', value: 'SAT'},
+                    {name: 'Sunday', value: 'SU'},
+                    {name: 'Monday', value: 'MO'},
+                    {name: 'Tuesday', value: 'TU'},
+                    {name: 'Wednesday', value: 'WE'},
+                    {name: 'Thursday', value: 'TH'},
+                    {name: 'Friday', value: 'FR'},
+                    {name: 'Saturday', value: 'SAT'},
                 ],
             },
 
             init: function () {
-                console.log(this.catalogues.filters);
-                /*jQuery(".bymonthday-filter-wrapper").selectable({
-                    selected: function( event, ui ) {
-                        console.log(ui);
-                        $(ui.selected).find('input').prop('checked', true);
-                    }
-                })*/
-
+                console.log(this.$el.dataset.inputfieldName);
+                this.inputfield = this.$el.dataset.inputfieldName;
                 this.$watch('rrule', (prop) => {
                     this.saveString();
                 });
 
                 this.$watch('settings', (prop, oldValue) => {
+                    console.log(prop);
                     this._settings = JSON.stringify(this.settings);
                     var self = this;
                     self.catalogues.filters.forEach(function (filter) {
-                        //console.log(item.value);
-                        //console.log(self.settings.filters);
 
                         var found = self.settings.filters.find(filter_setting => filter_setting === filter.value);
-                        //console.log(found);
                         if (found === undefined) {
                             if (self.rrule[filter.value] !== undefined) {
-                                //console.log(item.value);
                                 self.rrule[filter.value] = [];
                             }
                         }
                     });
                     if (prop.limit_mode === "count") {
-                        delete this.rrule.UNTIL;
-                        if (this.rrule.COUNT === null || this.rrule.COUNT === undefined) {
-                            this.rrule.COUNT = 1;
+                        delete self.rrule.UNTIL;
+                        if (self.rrule.COUNT === null || self.rrule.COUNT === undefined) {
+                            self.rrule.COUNT = 1;
                         }
                     } else {
                         //this.rrule.UNTIL = dayjs(this.rrule.DTSTART).add(7, 'day');
-                        delete this.rrule.COUNT
+                        delete self.rrule.COUNT
                     }
                     this.saveString();
                 });
@@ -118,8 +104,7 @@ document.addEventListener('alpine:init', (e) => {
                     this.settings = JSON.parse(widget_settings);
                 }
                 if (json_rrule) {
-                    var rrule = JSON.parse(json_rrule);
-                    this.rrule = rrule;
+                    this.rrule = JSON.parse(json_rrule);
                     this._rrule = JSON.stringify(this.rrule);
                 } else {
                     //console.log(this.rrule);

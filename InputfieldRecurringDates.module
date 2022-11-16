@@ -11,13 +11,22 @@ use RRule\RRule;
  */
 class InputfieldRecurringDates extends Inputfield
 {
+    public static function getModuleInfo()
+    {
+        return array(
+          'title'    => 'Recurring Dates',
+          'version'  => 001,
+          'summary'  => 'Field that lets you define a recurring date rule.',
+          'icon'     => 'calendar-o',
+					'requires'=> 'AlpineJS'
+        );
+    }
+
     const defaultRows = 5;
     private static $alpine_added = false;
     public function __construct()
     {
         parent::__construct();
-        //$this->setAttribute('type', 'textarea');
-        //$this->setAttribute('rows', self::defaultRows);
     }
 
     public function init()
@@ -40,21 +49,14 @@ class InputfieldRecurringDates extends Inputfield
         //$this->config->scripts->add($alpineSource);
     }
 
-    public function renderReady(Inputfield $parent = null, $renderValueMode = false){
-        $this->config->scripts->add("https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js");
+    /*public function renderReady(Inputfield $parent = null, $renderValueMode = false){
+        $this->config->scripts->add("https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js", [
+          'defer' => ''
+        ]);
         parent::renderReady($parent, $renderValueMode);
-    }
+    }*/
 
-    public static function getModuleInfo()
-    {
-        return array(
-          'title'    => 'InputfieldRecurringDates',
-          'version'  => 001,
-          'summary'  => 'Input field for recurring dates.',
-          'icon'     => 'calendar-o',
-          'requires' => 'FieldtypeRecurringDates',
-        );
-    }
+
     /*
         public function renderReady(Inputfield $parent = null, $renderValueMode = false)
         {
@@ -72,29 +74,33 @@ class InputfieldRecurringDates extends Inputfield
     {
         /** @var RecurringDate $recurring_dates */
         $recurring_dates = $this->value;
+        //bd($recurring_dates);
         $this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
-        // $saved_rrule = $this->hasPage()->meta()->get($this->name);
-        bd($this->value);
-        // $parsed_json = json_decode($this->value->rrule, true);
-        // $parsed_rule = new RRule($parsed_json);
+
         $occurrences = $recurring_dates->occurrences;
-        //bd($occurrences);
-        //bd($recurring_dates->rrule);
-        //bd($dates);
-        //$this->setAttribute('type', 'hidden');
+        //$rule_json = "{}";
+        if($recurring_dates->rrule) {
+            $rule_json = json_encode($recurring_dates->rrule->getRule());
+        }
+
         $this->setAttribute('class', 'uk-input main-input');
-        $this->setAttribute('value', [$this->value->rrule]);
+        if($rule_json) {
+            $this->setAttribute('value', [$rule_json]);
+        }
         $this->setAttribute('x-ref', 'main-input');
         $this->setAttribute('x-model', '_rrule');
-        $this->setAttribute('data-rrule', $recurring_dates->rrule);
+        $this->setAttribute('data-rrule', $rule_json  );
+        $this->setAttribute('type', 'hidden');
         $this->setAttribute('data-settings', $recurring_dates->settings);
+
 
         $out = "";
         $filePath = "{$this->config->paths->siteModules}FieldtypeRecurringDates/partials/AlpineComponent.php";
         $alpineComponent = wireRenderFile($filePath, [
           'fieldtype'  => $this->hasFieldtype,
           'inputfield' => $this,
-          'occurrences'      => $occurrences
+          'occurrences'      => $occurrences,
+          'inputfieldValue' => $recurring_dates
         ]);
 
         $out .= $alpineComponent;
@@ -111,42 +117,44 @@ class InputfieldRecurringDates extends Inputfield
 
     public function ___processInput(WireInputData $input)
     {
+        //bd($input);
+        //$input->post
         $name = $this->attr('name');
         $recurring_date_obj = new RecurringDate();
-        // bd($recurring_date_obj);
-        // $dates = new OccurrenceArray();
         $value = $input[$name];
         $settings = $input[$name . "_settings"];
 
         if($value === "") return $recurring_date_obj;
 
-        /*foreach(json_decode($settings, true) as $key => $setting){
-            $recurring_date_obj->settings->set($key, $setting);
-        }*/
         $recurring_date_obj->settings = $settings;
-        // bd($recurring_date_obj->settings);
-
-        //$page = $this->hasPage;
-        $recurring_date_obj->rrule = $value;
-
-
+        //$recurring_date_obj->rrule = $value;
         $value = json_decode($value, true);
 
+        // New RRule from input
         $rrule = new RRule($value);
+        $recurring_date_obj->rrule = $rrule;
 
-        foreach ($rrule as $date) {
-            $occurrence_date = new Occurrence();
-            $occurrence_date->excluded = false;
-            $occurrence_date->date = $date;
-            $recurring_date_obj->occurrences->add($occurrence_date);
-            //$dates->add($ocurrence_date);
+        // Compare existing value with new RRule array
+        $existing_rule = null;
+        if ($this->attr('value')->rrule) {
+            $existing_rule = $this->attr('value')->rrule->getRule();
         }
 
-        bd($recurring_date_obj->settings);
+        // Check if RRule array value is different than existing one
+        if($existing_rule !== $rrule->getRule()){
+            foreach ($rrule as $date) {
+                $occurrence_date = new Occurrence();
+                $occurrence_date->excluded = false;
+                $occurrence_date->date = $date;
+                $recurring_date_obj->occurrences->add($occurrence_date);
+                //$dates->add($ocurrence_date);
+            }
 
-        //$page->meta()->set($name, $value);
-        $this->val($recurring_date_obj);
-        $this->trackChange('value');
+            $this->val($recurring_date_obj);
+            $this->trackChange('value');
+            return $this;
+        }
+        return $this;
 
     }
 }

@@ -1,7 +1,33 @@
 <?php namespace ProcessWire;
 class RecurringDatesFinder extends WireData implements Module {
+    public static function getModuleInfo()
+    {
+        return array(
+          'title'   => 'Recurring Dates Finder',
+          'version' => 001,
+          'summary' => '',
+          'icon'    => 'search'
+        );
+    }
 
-    public function find($start = null, $end = null, $options = array()) {
+    public function find($start, $end, $selector = null, $options = array()) {
+        $selected_pages = null;
+        $recurring_fields = $this->fields->find('type=FieldtypeRecurringDates');
+
+        if($options['fields']){
+            $selected_fields = implode('|', $this->sanitizer->array($options['fields']));
+            $recurring_fields = $this->fields->find("name=$selected_fields");
+        }
+
+        if($selector){
+            //$selector .= "";
+            $selector .= ",$recurring_fields>=$start, $recurring_fields<=$end";
+            $selected_pages = $this->pages->findIDs($selector);
+            if(!$selected_pages){
+                return array();
+            }
+        }
+
         $default = [
           'fields' => '',
         ];
@@ -15,59 +41,44 @@ class RecurringDatesFinder extends WireData implements Module {
             $start = $this->datetime('Y-m-d H:i:s', $start);
         if($end)
             $end = $this->datetime('Y-m-d H:i:s', $end);
-        if($options['fields']){
-            $selected_fields = $this->sanitizer->arrayVal($options['fields']);
-            $recurring_fields = $this->fields->find($selected_fields);
-        }else {
-            $recurring_fields = $this->fields->find('type=FieldtypeRecurringDates');
-        }
 
-        //bd($recurring_fields);
-        $sql = new WireArray;
-        /** @var Field $field */
+        /** @var DatabaseQuerySelect $subquery */
+        $field_queries = new WireArray();
         foreach($recurring_fields as $field){
+            /** @var Field $field */
             $table = $field->getTable();
-
-            /** @var DatabaseQuerySelect $subquery */
-            $subquery = new DatabaseQuerySelect();
-            $subquery = $subquery->select('pages_id')
-              ->select('data')
-              ->from($table);
+            $query = "SELECT '{$field->name}' as field, data as date, pages_id as id FROM $table ";
+            $where = [];
             if($start){
-                $subquery->where('data >= :start');
-
+                $where[] = "data >= :start";
             }
             if($end){
-                $subquery->where('data <= :end')
-                  ->bindValue(':end', $end);
+                $where[] = "data <= :end";
             }
-            $sql->add($subquery);
+            $where = implode(" AND ", $where);
+            $query .= "WHERE $where";
+            if($selected_pages){
+                $selected_pages = implode(",", $selected_pages);
+                $query .= " AND pages_id IN($selected_pages)";
+            }
+            $field_queries->add($query);
         }
-        bd($sql);
-        if($sql->count() > 1){
-            /*$sql = implode(' UNION ', $sql);
-            bd($sql);*/
-            $union_query = "";
-            $union_query = $sql->implode("UNION ", function($item) use ($union_query){
-                bd($item->getQuery());
+        if($field_queries->count() > 1){
+            $union_query = $field_queries->implode("UNION All", function($item){
                 return $item->getQuery();
             });
-
             $pdo = $this->database->prepare($union_query);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
             return $pdo->fetchAll(\PDO::FETCH_ASSOC);
-
         }else{
-            if($start)
-                $sql[0]->bindValue(':start', $start);
-            if($end)
-                $sql[0]->bindValue(':end', $end);
-            $result = $sql[0]->execute();
-            return $result->fetchAll(\PDO::FETCH_ASSOC);
+            //bd($field_queries->first());
+            $pdo = $this->database->prepare($field_queries->first());
+            $pdo->bindValue(':start', $start);
+            $pdo->bindValue(':end', $end);
+            $pdo->execute();
+            return $pdo->fetchAll(\PDO::FETCH_ASSOC);
         }
-
-        //echo $q->getQuery() . PHP_EOL;
     }
 }
