@@ -1,79 +1,94 @@
 <?php namespace ProcessWire;
-class RecurringDatesFinder extends WireData implements Module {
+class RecurringDatesFinder extends WireData implements Module
+{
     public static function getModuleInfo()
     {
         return array(
-          'title'   => 'Recurring Dates Finder',
+          'title' => 'Recurring Dates Finder',
           'version' => 001,
           'summary' => '',
-          'icon'    => 'search'
+          'icon' => 'search'
         );
     }
-
-    public function find($start, $end, $selector = null, $options = array()) {
+    /**
+     * @param $start
+     * @param $end
+     * @param $selector
+     * @param $options
+     * @return array|WireArray|void
+     * @throws WireException
+     */
+    public function ___getRecurringFieldQueries($start, $end, $selector, $options)
+    {
         $selected_pages = null;
         $recurring_fields = $this->fields->find('type=FieldtypeRecurringDates');
-
-        if($options['fields']){
-            $selected_fields = implode('|', $this->sanitizer->array($options['fields']));
-            $recurring_fields = $this->fields->find("name=$selected_fields");
-        }
-
-        if($selector){
-            //$selector .= "";
-            $selector .= ",$recurring_fields>=$start, $recurring_fields<=$end";
-            $selected_pages = $this->pages->findIDs($selector);
-            if(!$selected_pages){
-                return array();
-            }
-        }
-
+        if (!$recurring_fields->count) return;
         $default = [
           'fields' => '',
         ];
 
         $options = array_merge($default, $options);
+        if ($options['fields']) {
+            $selected_fields = implode('|', $this->sanitizer->array($options['fields']));
+            $found_fields = $this->fields->find("name=$selected_fields");
+            if ($found_fields->count) {
+                $recurring_fields = $found_fields;
+            }
+        }
+
+        if ($selector) {
+            $selector .= ",$recurring_fields>=$start, $recurring_fields<=$end";
+            $selected_pages = $this->pages->findIDs($selector);
+        }
 
         $start = $this->sanitizer->date($start);
         $end = $this->sanitizer->date($end);
 
-        if($start)
+        if ($start)
             $start = $this->datetime('Y-m-d H:i:s', $start);
-        if($end)
+        if ($end)
             $end = $this->datetime('Y-m-d H:i:s', $end);
 
         /** @var DatabaseQuerySelect $subquery */
         $field_queries = new WireArray();
-        foreach($recurring_fields as $field){
+
+        foreach ($recurring_fields as $field) {
             /** @var Field $field */
             $table = $field->getTable();
             $query = "SELECT '{$field->name}' as field, data as date, pages_id as id FROM $table ";
             $where = [];
-            if($start){
+            if ($start) {
                 $where[] = "data >= :start";
             }
-            if($end){
+            if ($end) {
                 $where[] = "data <= :end";
             }
             $where = implode(" AND ", $where);
             $query .= "WHERE $where";
-            if($selected_pages){
+            if ($selected_pages) {
                 $selected_pages = implode(",", $selected_pages);
                 $query .= " AND pages_id IN($selected_pages)";
             }
             $field_queries->add($query);
         }
-        if($field_queries->count() > 1){
-            $union_query = $field_queries->implode("UNION All", function($item){
-                return $item->getQuery();
+        return $field_queries;
+    }
+
+    public function find($start, $end, $selector = null, $options = array())
+    {
+        $field_queries = $this->getRecurringFieldQueries($start, $end, $selector, $options);
+        if ($field_queries->count() > 1) {
+            $union_query = $field_queries->implode(" UNION All ", function ($item) {
+                return $item;
             });
+            $union_query .= "ORDER BY date";
             $pdo = $this->database->prepare($union_query);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
             return $pdo->fetchAll(\PDO::FETCH_ASSOC);
-        }else{
-            //bd($field_queries->first());
+        } else {
+
             $pdo = $this->database->prepare($field_queries->first());
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
