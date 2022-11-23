@@ -2,7 +2,7 @@
   "name": "elabx/fieldtype-recurring-dates",
   "description": "Field to setup recurring dates using RRule",
   "type": "pw-module",
-  "keywords": ["processwire", "seo", "metatags", "sitemap"],
+  "keywords": ["processwire"],
   "homepage": "https://github.com/elabx/FieldtypeRecurringDates",
   "license": "MIT",
   "authors": [
@@ -15,6 +15,7 @@
   "require": {
     "wireframe-framework/processwire-composer-installer": "^1.1",
     "php": ">=7.3",
-    "rlanvin/php-rrule": "^2.3"
+    "rlanvin/php-rrule": "^2.3",
+    "elabx/modulejs-alpinejs": "dev-main"
   }
 }

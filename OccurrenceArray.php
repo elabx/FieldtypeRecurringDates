@@ -6,7 +6,7 @@
  * Contains multiple occurrences of an RRule definition
  *
  */
-class OccurrenceArray extends WireArray {
+class OccurrenceArray extends PaginatedArray {
 
     /**
      * Is given item valid to store in this EventArray?

@@ -3,32 +3,41 @@
 use RRule\RRule;
 
 /**
- * FieldtypeEvents
+ * FieldtypeRecurringDates
  *
  * Fieldtype for a field that stores events each with a date and title
  *
  * This is an example of creating your own FieldtypeMulti to represent a spreadsheet type table of information.
  *
  */
+class FieldtypeRecurringDates extends FieldtypeMulti
+{
 
-class FieldtypeRecurringDates extends FieldtypeMulti {
-
-    public static function getModuleInfo() {
+    public static function getModuleInfo()
+    {
         return array(
-            'title' => 'Recurring Dates',
-            'version' => 001,
-            'summary' => 'Field that stores recurring events from rrule input.',
-            'icon' => 'calendar-o',
-            'installs' => 'InputfieldRecurringDates'
+          'title' => 'Recurring Dates',
+          'version' => 001,
+          'summary' => 'Field that stores recurring events from rrule input.',
+          'icon' => 'calendar-o',
+          'installs' => 'InputfieldRecurringDates'
         );
     }
-    const EXTRAS_TABLE_NAME_SUFFIX =  '_extras';
+
+    const EXTRAS_TABLE_NAME_SUFFIX = '_extras';
+    const EXTRAS_TABLE_COLS = [
+      'pages_id',
+      'rrule',
+      'settings'
+    ];
+
     /**
      * Construct the Fieldtype, make sure all dependencies are in place
      *
      */
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->set('usePagination', true);
         $this->set('useOrderByCols', true);
         require_once(__DIR__ . '/RecurringDatesSettings.php');
@@ -38,15 +47,11 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         parent::__construct();
     }
 
-    public function init(){
+    public function init()
+    {
 
-        $this->addHook('/fieldtype-recurring-dates/get-dates/', function($event){
-            /*if(!$event->user->isLoggedin()) return;
-            $rrule = json_decode($event->input->get->data, true);
-            $this->getRruleOcurrences();*/
-            //$page_id = $event->input->get->int('id');
+        $this->addHook('/fieldtype-recurring-dates/get-dates/', function ($event) {
         });
-
         $this->addHookAfter('Fields::added', $this, 'hookAfterFieldAdded');
         $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
         $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
@@ -54,14 +59,15 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
     }
 
     /**
-     * Adds the rrule database table
+     * Adds the rrule settings table
      *
      * @return void
      *
      */
-    public function hookAfterFieldAdded($event){
+    public function hookAfterFieldAdded($event)
+    {
         $item = $event->arguments(0);
-        if($item->type->name == $this->name) {
+        if ($item->type->name == $this->name) {
             $table_name = $this->getExtrasTableName($item);
             $create_rrules_table = "";
             $create_rrules_table .=
@@ -71,7 +77,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
               "rrule MEDIUMTEXT NOT NULL," .
               "settings MEDIUMTEXT NOT NULL," .
               "PRIMARY KEY (`pages_id`)," .
-              "UNIQUE KEY (`pages_id`)".
+              "UNIQUE KEY (`pages_id`)" .
               ")";
             try {
                 $query = $this->database->prepare($create_rrules_table);
@@ -82,21 +88,21 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         }
     }
 
-    public function hookAfterPageDelete($event){
+    public function hookAfterPageDelete($event)
+    {
         $pages = $event->object;
         $page = $event->arguments(0);
         $options = $event->arguments(1);
-        //  bd($this);
-        //  bd($page);
         $recurring_fields = $page->getFields()->find("type={$this->name}");
-        foreach($recurring_fields as $f){
+        foreach ($recurring_fields as $f) {
             $this->deleteSettings($page, $f);
         }
     }
 
-    public function hookAfterFieldDeleted($event){
+    public function hookAfterFieldDeleted($event)
+    {
         $item = $event->arguments(0);
-        if($item->type->name == $this->name) {
+        if ($item->type->name == $this->name) {
             $table_name = $this->getExtrasTableName($item);
             $create_rrules_table = "";
             $create_rrules_table .= "DROP TABLE IF EXISTS $table_name;";
@@ -110,8 +116,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
     }
 
 
-
-    public function getRruleOCurrences($value){
+    public function getRruleOCurrences($value)
+    {
         $rrule = new RRule($value);
         return $rrule;
     }
@@ -123,7 +129,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      * @return array
      *
      */
-    public function getDatabaseSchema(Field $field) {
+    public function getDatabaseSchema(Field $field)
+    {
         $schema = parent::getDatabaseSchema($field);
         $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
         $schema['keys']['primary'] = 'PRIMARY KEY (id)';
@@ -132,6 +139,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         $schema['keys']['data'] = 'KEY data (data)';
         return $schema;
     }
+
     /**
      * Return the Inputfield used to collect input for a field of this type
      *
@@ -140,8 +148,10 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      * @return Inputfield|InputfieldRecurringDates
      *
      */
-    public function getInputfield(Page $page, Field $field) {
-        $inputfield = $this->modules->get('InputfieldRecurringDates'); /** @var InputfieldRecurringDates $inputfield */
+    public function getInputfield(Page $page, Field $field)
+    {
+        $inputfield = $this->modules->get('InputfieldRecurringDates');
+        /** @var InputfieldRecurringDates $inputfield */
         return $inputfield;
     }
 
@@ -153,11 +163,11 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      * @return RecurringDate
      *
      */
-    public function getBlankValue(Page $page, Field $field) {
+    public function getBlankValue(Page $page, Field $field)
+    {
         return new RecurringDate();
         //return new OccurrenceArray();
     }
-
 
     /**
      * Given a value, make it clean and of the correct type for storage within a Page
@@ -168,52 +178,66 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      * @return mixed
      *
      */
-    public function sanitizeValue(Page $page, Field $field, $value) {
+    public function sanitizeValue(Page $page, Field $field, $value)
+    {
         // if given an invalid value, return a valid blank value
         return $value;
     }
 
-    /*public function ___savePageField(Page $page, Field $field) {
-        parent::___savePageField($page, $field);
-
-    }*/
-    protected function getRecurringDatesTable()
+    protected function isSettingsValue($value)
     {
-        $field_name = $this->getAttribute('name');
-        return "field_{$field_name}_dates";
-    }
-
-
-
-    /**
-     * Given a raw value from DB (arrays), return the value as it would appear in a Page object (EventArray)
-     *
-     * @param Page $page
-     * @param Field $field
-     * @param RecurringDate $value
-     //* @return EventArray
-     *
-     */
-    public function ___wakeupValue(Page $page, Field $field, $value) {
-
-        $recurring_date = $this->getBlankValue($page, $field);
-        $recurring_date->settings = json_encode($recurring_date->settings, true);
-        if(empty($value) || !is_array($value)) return $recurring_date;
-        $settings = $this->getSettings($page, $field);
-        $recurring_date->settings = $settings->settings;
-        $rrule_value = json_decode($settings->rrule, true);
-        $rrule = new RRule($rrule_value);
-        $recurring_date->rrule = $rrule;
-
-        foreach($value as $v) {
-            $occurrence = new Occurrence();
-            $occurrence->date = (new \DateTime($v['data']));
-            $occurrence->excluded = $v['excluded'] ? true : false;
-            $occurrence->resetTrackChanges();
-            $recurring_date->occurrences->add($occurrence);
-            //$occurrences->add($occurrence);
+        $count = 0;
+        $keys = self::EXTRAS_TABLE_COLS;
+        foreach ($keys as $key) {
+            if (isset($value[$key]) || array_key_exists($key, $value)) {
+                $count++;
+            }
         }
 
+        if ($count == 3) {
+            return true;
+        } else {
+            return false;
+        }
+        //if(array_key_exists(''))
+    }
+
+    public function ___wakeupValue(Page $page, Field $field, $value)
+    {
+        $recurring_date = $this->getBlankValue($page, $field);
+        $recurring_date->settings = json_encode($recurring_date->settings, true);
+        if (empty($value) || !is_array($value)) return $recurring_date;
+
+        if ($this->isSettingsValue($value)) {
+            $recurring_date->settings = $value['settings'];
+            $rrule_value = json_decode($value['rrule'], true);
+            $rrule = new RRule($rrule_value);
+            $recurring_date->rrule = $rrule;
+        } else {
+            $settings = $this->getSettings($page, $field);
+            $recurring_date->settings = $settings->settings;
+            $rrule_value = json_decode($settings->rrule, true);
+            $rrule = new RRule($rrule_value);
+            $recurring_date->rrule = $rrule;
+
+            if (isset($value['_pagination_limit'])) {
+                $recurring_date->occurrences->setLimit($value['_pagination_limit']);
+                $recurring_date->occurrences->setStart($value['_pagination_start']);
+                $recurring_date->occurrences->setTotal($value['_pagination_total']);
+            }
+            unset($value['_pagination_limit'], $value['_pagination_start'], $value['_pagination_total']);
+            if (isset($value['_filters']) && $value['_filters'] instanceof Selectors) {
+                $recurring_date->occurrences->data('filters', $value['_filters']);
+                unset($value['_filters']);
+            }
+            foreach ($value as $key => $v) {
+                $occurrence = new Occurrence();
+                $occurrence->date = (new \DateTime($v['data']));
+                $occurrence->excluded = $v['excluded'] ? true : false;
+                $occurrence->resetTrackChanges();
+                $recurring_date->occurrences->add($occurrence);
+            }
+        }
         // tell it to start tracking changes from this point forward
         $recurring_date->resetTrackChanges();
         return $recurring_date;
@@ -229,23 +253,22 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      */
 
-    public function ___sleepValue(Page $page, Field $field, $value) {
+    public function ___sleepValue(Page $page, Field $field, $value)
+    {
 
         $sleepValue = array();
-        if($value->rrule) {
+        if ($value->rrule) {
             $this->saveSettings($page, $field, $value);
         }
         //bd($page);
-        if(!$value instanceof RecurringDate) return $sleepValue;
+        if (!$value instanceof RecurringDate) return $sleepValue;
         // make the events sort by date ascending
         $value->occurrences->sort('date');
 
-
-
         // convert each Event to an array within sleepValue
-        foreach($value->occurrences as $occurrence) {
+        foreach ($value->occurrences as $occurrence) {
             // if no date specified then skip it
-            if(!$occurrence->date) continue;
+            if (!$occurrence->date) continue;
             // if($occurrence->formatted) throw new WireException('Formatted events cannot be saved');
             $sleepValue[] = array(
               'data' => $occurrence->date, // note: 'date' is becoming 'data' (with an 'a')
@@ -254,26 +277,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         }
 
         return $sleepValue;
-    }
-
-    /**
-     * Format a value for front-end output
-     *
-     * This is the same as a regular value except that it is a cloned copy with
-     * the “title” subfields entity encoded for output in markup.
-     *
-     * @param Page $page
-     * @param Field $field
-     * @param EventArray $value
-     * @return EventArray
-     *
-     */
-    public function ___formatValue(Page $page, Field $field, $value) {
-        // make a new copy with formatted events (i.e. entity-encoded titles)
-        /*foreach($value->ocurrences as $i => $ocurrence){
-            $ocurrence->formatDate('U');
-        }*/
-        return $value;
     }
 
     /**
@@ -287,12 +290,13 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      */
 
-    public function ___markupValue(Page $page, Field $field, $value = null, $property = '') {
-        if(!$value instanceof RecurrentD) $value = $page->get($field->name);
-        if(!$value instanceof EventArray || !$value->count()) return '';
+    public function ___markupValue(Page $page, Field $field, $value = null, $property = '')
+    {
+        if (!$value instanceof RecurrentD) $value = $page->get($field->name);
+        if (!$value instanceof EventArray || !$value->count()) return '';
         $a = [];
-        foreach($value as $event) {
-            if($property) {
+        foreach ($value as $event) {
+            if ($property) {
                 $a[] = $this->sanitizer->entities1($event->get($property));
             } else {
                 $a[] = $this->sanitizer->entities1("$event->date");
@@ -301,73 +305,107 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         return "<ul><li>" . implode("</li><li>", $a) . "</li></ul>";
     }
 
-    public function getMonths(){
+    public function getMonths()
+    {
         $months = [];
-        for ($m=1; $m<=12; $m++) {
-            $months[] = date('F', mktime(0,0,0,$m, 1, date('Y')));
+        for ($m = 1; $m <= 12; $m++) {
+            $months[] = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
         }
-        //bd($months);
         return $months;
     }
 
-    /**
-     * Method called when the field is database-queried from a $pages->find() selector
-     *
-     * @param DatabaseQuerySelect|PageFinderDatabaseQuerySelect
-     * @param string $table
-     * @param string $subfield
-     * @param string $operator
-     * @param string $value
-     * @return PageFinderDatabaseQuerySelect
-     *
-     */
-    /*
-    public function getMatchQuery($query, $table, $subfield, $operator, $value) {
-
-        if($subfield == 'date') {
-            // If searching 'date' then assume our default (data) field
-            $subfield = 'data';
-        }
-
-        if($subfield === 'data') {
-            // if searching data, make sure it is in the correct 'date' format
-            $value = wireDate('Y-m-d', $value);
-
-        } else if($subfield === 'title') {
-            // use fulltext search features when searching title
-            $finder = new DatabaseQuerySelectFulltext($query);
-            $finder->match($table, $subfield, $operator, $value);
+    public function getLoadQuery(Field $field, DatabaseQuerySelect $query)
+    {
+        if ($this->wire()->process instanceof WirePageEditor) {
+            $query = parent::getLoadQuery($field, $query);
+            $query->set('select', []);
+            foreach (self::EXTRAS_TABLE_COLS as $col) {
+                $selects[] = "{$this->getExtrasTableName($field)}.{$col} AS `{$field->name}__{$col}`";
+            }
+            $query->remove('orderby');
+            foreach ($selects as $s) {
+                $query->select($s);
+            }
             return $query;
+        } else {
+            return parent::getLoadQuery($field, $query);
         }
-
-        return parent::getMatchQuery($query, $table, $subfield, $operator, $value);
     }
-    */
-
-    /**
-     * Return array with information about what properties and operators can be used with this field
-     *
-     * This is what is used when finding pages like with Lister/ListerPro, etc.
-     * ProcessWire’s default generally gets this right so we often don’t have to implement this method.
-     * In this case, we are just having it show the correct label for “Date”.
-     *
-     * @param Field $field
-     * @param array $data Array of extra data, when/if needed
-     * @return array
-     *
-     */
-    /*public function ___getSelectorInfo(Field $field, array $data = array()) {
-        $info = parent::___getSelectorInfo($field, $data);
-        $info['subfields']['data']['label'] = $this->_('Date');
-        return $info;
-    }*/
 
     public function ___loadPageField(Page $page, Field $field)
-    {   //bd($field);
-        //$field->set('paginationLimit', 2);
-        $input = $this->wire()->input;
-        $value =  parent::___loadPageField($page, $field); // TODO: Change the autogenerated stub
-        return $value;
+    {
+        if (!$page->id || !$field->id) return null;
+
+        if ($this->wire()->process instanceof WirePageEditor) {
+            /* Copied from Fieldtype.php */
+
+            $database = $this->wire()->database;
+            $schema = $this->getDatabaseSchema($field);
+            //$table = $database->escapeTable($field->table);
+            $table = $this->getExtrasTableName($field);
+            $stmt = null;
+
+            /** @var DatabaseQuerySelect $query */
+            $query = $this->wire(new DatabaseQuerySelect());
+            $query = $this->getLoadQuery($field, $query);
+            $bindKey = $query->bindValueGetKey($page->id);
+            $query->where("$table.pages_id=$bindKey");
+            $query->from($table);
+
+            try {
+                $stmt = $query->prepare();
+                $result = $database->execute($stmt);
+            } catch (\Exception $e) {
+                $result = false;
+                $this->trackException($e, false, true);
+            }
+
+            if (!$result) return null;
+
+            $fieldName = $database->escapeCol($field->name);
+            $columns = $database->getColumns($this->getExtrasTableName($field));
+
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
+
+            if (!$row) return null;
+
+            $value = array();
+
+            foreach ($columns as $k) {
+                $key = $fieldName . '__' . $k;
+                $value[$k] = $row[$key];
+            }
+            // if there is just one 'data' field here, then just make 'data' the value
+            if (count($value) == 1 && isset($value['data'])) $value = $value['data'];
+            return $value;
+
+        } else {
+            return parent::___loadPageField($page, $field);
+        }
+
+
+    }
+
+
+    /**
+     * Saves rrule string when field is saved.
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param RecurringDate $rule
+     * @return void
+     */
+    protected function saveSettings(Page $page, Field $field, RecurringDate $rdate)
+    {
+
+        $sql = "INSERT INTO {$this->getExtrasTableName($field)} (pages_id, rrule, settings) VALUES(:pages_id, :rrule, :settings) ON DUPLICATE KEY UPDATE pages_id=:pages_id, rrule=:rrule, settings=:settings";
+        /** @var \PDOStatement $pdo */
+        $pdo = $this->database->prepare($sql);
+        $pdo->bindValue(':pages_id', $page->id);
+        $pdo->bindValue(':rrule', json_encode($rdate->rrule->getRule()));
+        $pdo->bindValue(':settings', (string)$rdate->settings);
+        $pdo->execute();
     }
 
     /**
@@ -375,21 +413,10 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
      *
      * @param Page $page
      * @param Field $field
-     * @param string $rule
      * @return void
      */
-    protected function saveSettings(Page $page, Field $field, RecurringDate $rdate){
-
-        $sql = "INSERT INTO {$this->getExtrasTableName($field)} (pages_id, rrule, settings) VALUES(:pages_id, :rrule, :settings) ON DUPLICATE KEY UPDATE pages_id=:pages_id, rrule=:rrule, settings=:settings";
-        /** @var \PDOStatement $pdo */
-        $pdo = $this->database->prepare($sql);
-        $pdo->bindValue(':pages_id', $page->id);
-        $pdo->bindValue(':rrule', json_encode($rdate->rrule->getRule()));
-        $pdo->bindValue(':settings', (string) $rdate->settings);
-        $pdo->execute();
-    }
-
-    protected function deleteSettings(Page $page, Field $field){
+    protected function deleteSettings(Page $page, Field $field)
+    {
         $sql = "DELETE FROM {$this->getExtrasTableName($field)} WHERE pages_id = :id";
         /** @var \PDOStatement $pdo */
         $pdo = $this->database->prepare($sql);
@@ -397,14 +424,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         $pdo->execute();
     }
 
-    /**
-     * Get rrule when field. Used on wareup value.
-     *
-     * @param Page $page
-     * @param Field $field
-     * @return string
-     */
-    protected function getSettings(Page $page, Field $field){
+    protected function getSettings(Page $page, Field $field)
+    {
         $sql = "SELECT rrule, settings FROM {$this->getExtrasTableName($field)} WHERE pages_id=:pages_id";
         $pdo = $this->database->prepare($sql);
         $pdo->bindValue(':pages_id', $page->id);
@@ -412,7 +433,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti {
         return $pdo->fetch(\PDO::FETCH_OBJ);
     }
 
-    public function getExtrasTableName(Field $field){
+    public function getExtrasTableName(Field $field)
+    {
         return $field->getTable() . self::EXTRAS_TABLE_NAME_SUFFIX;
     }
 

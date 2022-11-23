@@ -26,6 +26,7 @@ class RecurringDate extends WireData
         $this->set('occurrences', new OccurrenceArray());
         $this->set('settings', new RecurringDatesSettings());
         $this->set('rrule', null);
+        $this->set('pagination', []);
         parent::__construct();
     }
 

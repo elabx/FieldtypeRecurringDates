@@ -50,9 +50,9 @@ document.addEventListener('alpine:init', (e) => {
             show_table: false,
             catalogues: {
                 filters: [
-                    {label: "By month", value: 'BYMONTH'},
-                    {label: "By day of the week", value: 'BYDAY'},
-                    {label: "By day of the month", value: 'BYMONTHDAY'},
+                    {label: "Months", value: 'BYMONTH'},
+                    {label: "Days of the week", value: 'BYDAY'},
+                    {label: "Days of the month", value: 'BYMONTHDAY'},
                 ],
                 daysOfWeek: [
                     {name: 'Sunday', value: 'SU'},
@@ -66,14 +66,12 @@ document.addEventListener('alpine:init', (e) => {
             },
 
             init: function () {
-                console.log(this.$el.dataset.inputfieldName);
                 this.inputfield = this.$el.dataset.inputfieldName;
                 this.$watch('rrule', (prop) => {
                     this.saveString();
                 });
 
                 this.$watch('settings', (prop, oldValue) => {
-                    console.log(prop);
                     this._settings = JSON.stringify(this.settings);
                     var self = this;
                     self.catalogues.filters.forEach(function (filter) {
@@ -85,15 +83,7 @@ document.addEventListener('alpine:init', (e) => {
                             }
                         }
                     });
-                    if (prop.limit_mode === "count") {
-                        delete self.rrule.UNTIL;
-                        if (self.rrule.COUNT === null || self.rrule.COUNT === undefined) {
-                            self.rrule.COUNT = 1;
-                        }
-                    } else {
-                        //this.rrule.UNTIL = dayjs(this.rrule.DTSTART).add(7, 'day');
-                        delete self.rrule.COUNT
-                    }
+
                     this.saveString();
                 });
 
@@ -108,9 +98,9 @@ document.addEventListener('alpine:init', (e) => {
                     this._rrule = JSON.stringify(this.rrule);
                 } else {
                     //console.log(this.rrule);
-                    var now = new Date();
+                    /*var now = new Date();
                     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                    this.rrule.DTSTART = now.toISOString().slice(0, 16);
+                    this.rrule.DTSTART = now.toISOString().slice(0, 16);*/
                     this.settings.limit_mode = "count";
                 }
             },
