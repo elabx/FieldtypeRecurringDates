@@ -4,9 +4,9 @@ use DateTime;
 use RRule\RRule;
 
 /**
- * FieldtypeRecurringEvents: Occurrence
+ * RecurringDate
  *
- * An individual event item to be part of an OccurrenceArray for a Page
+ * Contains the ocurrances, rrule data as json.
  *
  * @property OccurrenceArray $occurences
  * @property RRule $rrule RRule in JSON format;
@@ -18,13 +18,13 @@ class RecurringDate extends WireData
 
     /**
      * Construct a new Event
-     *
+     *s
      */
     public function __construct()
     {
         // define the fields that represent our event (and their default/blank values)
         $this->set('occurrences', new OccurrenceArray());
-        $this->set('settings', new RecurringDatesSettings());
+        $this->set('settings', new RecurringDateSettings());
         $this->set('rrule', null);
         $this->set('pagination', []);
         parent::__construct();

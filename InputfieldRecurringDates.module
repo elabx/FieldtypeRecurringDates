@@ -30,6 +30,7 @@ class InputfieldRecurringDates extends Inputfield
 		public function init()
 		{
 				// Load Alpine.js in <header>
+        $this->setAttribute('pageSize', 10);
 				$this->modules->AlpineJS;
 		}
 
@@ -37,7 +38,6 @@ class InputfieldRecurringDates extends Inputfield
 		{
 				/** @var RecurringDate $recurring_dates */
 				$recurring_dates = $this->value;
-        bd($recurring_dates);
 				$this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
 
 				$occurrences = $recurring_dates->occurrences;
@@ -75,6 +75,9 @@ class InputfieldRecurringDates extends Inputfield
 				return $fieldtype->markupValue($this->hasPage, $this->hasField, $this->value);
 		}
 
+    public function __getEventsUrl(){
+
+    }
 
 		public function ___processInput(WireInputData $input)
 		{
@@ -124,4 +127,17 @@ class InputfieldRecurringDates extends Inputfield
 				return $this;
 
 		}
+
+ public function ___getConfigInputfields() {
+       // Get the defaults and $inputfields wrapper we can add to
+       $inputfields = parent::___getConfigInputfields();
+        // Add a new Inputfield to it
+        $f = $this->modules->get('InputfieldInteger');
+        $f->attr('name', 'pageSize');
+        $f->label = 'Page size';
+        $f->value = $this->pageSize;
+        $inputfields->add($f);
+
+       return $inputfields;
+     }
 }

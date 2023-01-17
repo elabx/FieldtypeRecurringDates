@@ -4,12 +4,16 @@
 /** @var $fieldtype FieldtypeRecurringDates */
 /** @var $sanitizer Sanitizer */
 ?>
-<div data-inputfield-name="<?= $inputfield->name ?>" defer-x-data="recurringDatesInput">
+<div data-page-id="<?= $inputfield->hasPage->id ?>"
+     data-field-id="<?= $inputfield->hasField->id ?>"
+     data-inputfield-name="<?= $inputfield->name ?>"
+     data-inputfield-limit="<?= $inputfield->pageSize ?>"
+     defer-x-data="recurringDatesInput">
     <input <?= $inputfield->getAttributesString() ?>>
     <input x-model="_settings" type="hidden" name="<?= $inputfield->name ?>_settings">
-  <?php
-  $pre_text = htmlspecialchars($inputfield->getAttribute('data-json-rrule'), ENT_QUOTES, "UTF-8")
-  ?>
+    <?php
+    $pre_text = htmlspecialchars($inputfield->getAttribute('data-json-rrule'), ENT_QUOTES, "UTF-8")
+    ?>
     <!--<pre x-ref="pre-debug" style="white-space: normal;overflow-wrap: break-word;">
         <?php /*echo $pre_text; */ ?>
     </pre>-->
@@ -116,11 +120,7 @@
                             </div>
                         </div>
                     </div>
-
-
                 </div>
-
-
             </div>
         </div>
         <div>
@@ -178,19 +178,19 @@
                          x-show="settings.filters.includes('BYMONTH')">
                         <div class="">
                             <div class="uk-grid uk-child-width-1-4@m uk-grid-small" uk-grid>
-                              <?php foreach ($fieldtype->getMonths() as $i => $f): ?>
-                                  <div class="">
-                                      <input id="bymonth-<?= $sanitizer->name($f) ?>"
-                                             x-model.number="rrule.BYMONTH"
-                                             :value="<?= $i + 1 ?>"
-                                             class="uk-checkbox"
-                                             type="checkbox">
-                                      <label class="uk-form-label" for="bymonth-<?= $sanitizer->name($f) ?>">
-                                        <?= $f ?>
-                                      </label>
+                                <?php foreach ($fieldtype->getMonths() as $i => $f): ?>
+                                    <div class="">
+                                        <input id="bymonth-<?= $sanitizer->name($f) ?>"
+                                               x-model.number="rrule.BYMONTH"
+                                               :value="<?= $i + 1 ?>"
+                                               class="uk-checkbox"
+                                               type="checkbox">
+                                        <label class="uk-form-label" for="bymonth-<?= $sanitizer->name($f) ?>">
+                                            <?= $f ?>
+                                        </label>
 
-                                  </div>
-                              <?php endforeach ?>
+                                    </div>
+                                <?php endforeach ?>
                             </div>
                         </div>
                     </div>
@@ -204,19 +204,19 @@
                      x-show="settings.filters.includes('BYMONTHDAY')">
                     <div class="bymonthday-filter-wrapper">
                         <div class="uk-grid uk-grid-collapse" uk-grid>
-                          <?php for ($i = 1; $i <= 31; $i++): ?>
-                              <div class="bymonthday-grid-item">
-                                  <div class="bymonthday-wrapper">
+                            <?php for ($i = 1; $i <= 31; $i++): ?>
+                                <div class="bymonthday-grid-item">
+                                    <div class="bymonthday-wrapper">
 
-                                      <input id="bymonthday-<?= $i ?>" x-model.number="rrule.BYMONTHDAY"
-                                             value="<?= $i ?>"
-                                             type="checkbox">
-                                      <div class="bymonth-checkbox-background">
-                                          <label for="bymonthday-<?= $i ?>"><?= $i ?></label>
-                                      </div>
-                                  </div>
-                              </div>
-                          <?php endfor ?>
+                                        <input id="bymonthday-<?= $i ?>" x-model.number="rrule.BYMONTHDAY"
+                                               value="<?= $i ?>"
+                                               type="checkbox">
+                                        <div class="bymonth-checkbox-background">
+                                            <label for="bymonthday-<?= $i ?>"><?= $i ?></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endfor ?>
                         </div>
                     </div>
                 </div>
@@ -225,29 +225,48 @@
 
         </div>
     </div>
-    <div class="uk-margin">
+    <div class="uk-width-1-1@m uk-margin-auto uk-margin">
         <div class="uk-box-shadow-small ">
-            <div class="uk-grid" uk-grid>
-                <div class="uk-width-1-1 ">
-                    <div x-on:click="show_table = !show_table"
-                         class="uk-flex uk-padding-small uk-flex-middle uk-flex-between">
-                        <div>
-                            <i class="uk-margin-small-right" uk-icon="list">
-                              <?php /** @var $occurrences RecurringDate */ ?>
-                            </i>
-                          <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
-                        </div>
-                        <div>
-                            <button class="ui-button" type="button">
-                                Show
-                            </button>
+            <div class="uk-width-1-1 ">
+                <div class="uk-flex uk-padding-small uk-flex-middle uk-flex-between">
+                    <div x-on:click="show_table = !show_table">
+                        <i class="uk-margin-small-right" uk-icon="list">
+                            <?php /** @var $occurrences RecurringDate */ ?>
+                        </i>
+                        <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
+                    </div>
+                    <div>
+                        <div class="uk-grid-small uk-grid" uk-grid>
+                            <div>
+                                <select @change="updateEventList()" x-model.number="data.pagination.limit">
+                                    <optgroup label="Default limit:">
+                                        <option selected value="<?= $inputfield->pageSize ?>">
+                                            <?= $inputfield->pageSize ?>
+                                        </option>
+                                    </optgroup>
+
+                                    <optgroup label="Limits:">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <button class="ui-button" type="button">
+                                    Show
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div x-cloak x-show="show_table" class="uk-width-1-1">
-                    <hr class="uk-margin uk-margin-top">
+            <div x-cloak x-show="show_table" class=" uk-width-1-1">
+                <hr class="uk-margin uk-margin-top">
 
+                <div class=" uk-padding-small">
                     <table class="uk-table uk-table-small uk-table-divider" id="<?= $inputfield->name ?>_ocurrences"
                            class="uk-table-small uk-table uk-table-striped">
                         <thead>
@@ -256,17 +275,33 @@
                             <th>Exclude</th>
                         </tr>
                         </thead>
-                      <?php foreach ($occurrences as $i => $d): ?>
-                          <tr>
-                              <td><?= $d ?></td>
-                              <td>
-                                  <input id="input-<?= $i ?>" type="checkbox">
-                              </td>
-                          </tr>
-                      <?php endforeach ?>
+                        <template x-for="date in data.dates">
+                            <tr>
+                                <td x-text="date"></td>
+                                <td>
+                                    <input id="input-<?= $i ?>" type="checkbox">
+                                </td>
+                            </tr>
+                        </template>
                     </table>
-
+                    <div class="uk-flex uk-flex-middle uk-flex-right">
+                        <div x-text="data.pagination.pagination_string"></div>
+                        <ul class="uk-margin-small-left uk-margin-small uk-pagination" role="navigation"
+                            aria-label="Pagination links">
+                            <li aria-label="" class="" aria-current="true">
+                                <button @click="previousPage" type="button">
+                                    <span uk-icon="chevron-left"></span>
+                                </button>
+                            </li>
+                            <li aria-label="" class="">
+                                <button @click="nextPage" type="button">
+                                    <span uk-icon="chevron-right"></span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>

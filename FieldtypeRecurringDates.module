@@ -13,6 +13,7 @@ use RRule\RRule;
 class FieldtypeRecurringDates extends FieldtypeMulti
 {
 
+
     public static function getModuleInfo()
     {
         return array(
@@ -24,6 +25,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         );
     }
 
+    const defaultLimit = 10;
     const EXTRAS_TABLE_NAME_SUFFIX = '_extras';
     const EXTRAS_TABLE_COLS = [
       'pages_id',
@@ -40,7 +42,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     {
         $this->set('usePagination', true);
         $this->set('useOrderByCols', true);
-        require_once(__DIR__ . '/RecurringDatesSettings.php');
+        require_once(__DIR__ . '/RecurringDateSettings.php');
         require_once(__DIR__ . '/RecurringDate.php');
         require_once(__DIR__ . '/Occurrence.php');
         require_once(__DIR__ . '/OccurrenceArray.php');
@@ -50,12 +52,30 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     public function init()
     {
 
-        $this->addHook('/fieldtype-recurring-dates/get-dates/', function ($event) {
-        });
+        $this->addHook('/fieldtype-recurring-dates/get-dates/', $this, 'hookGetDates');
         $this->addHookAfter('Fields::added', $this, 'hookAfterFieldAdded');
         $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
         $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
         $this->addHookBefore('Pages::deleted', $this, 'hookAfterPageDelete');
+    }
+
+    public function hookGetDates($event){
+
+        if(!$event->user->isLoggedin()) return false;
+
+        $input = $event->input;
+        $page = $input->get->int('id');
+        $field = $input->get->int('field_id');
+        $start = $input->get->int('start');
+        $limit = $input->get->int('limit');
+
+        if(!$page || !$field) return "{}";
+
+        $field_name = $event->fields->get($field)->name;
+        $page = $event->pages->get($page);
+        $value = $page->$field_name("start=$start, limit=$limit, sort=data");
+        //bd($value);
+        return $value->occurrences;
     }
 
     /**
@@ -207,7 +227,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $recurring_date = $this->getBlankValue($page, $field);
         $recurring_date->settings = json_encode($recurring_date->settings, true);
         if (empty($value) || !is_array($value)) return $recurring_date;
-
+        bd($value);
         if ($this->isSettingsValue($value)) {
             $recurring_date->settings = $value['settings'];
             $rrule_value = json_decode($value['rrule'], true);
@@ -215,10 +235,12 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             $recurring_date->rrule = $rrule;
         } else {
             $settings = $this->getSettings($page, $field);
-            $recurring_date->settings = $settings->settings;
-            $rrule_value = json_decode($settings->rrule, true);
-            $rrule = new RRule($rrule_value);
-            $recurring_date->rrule = $rrule;
+            if($settings) {
+                $recurring_date->settings = $settings->settings;
+                $rrule_value = json_decode($settings->rrule, true);
+                $rrule = new RRule($rrule_value);
+                $recurring_date->rrule = $rrule;
+            }
 
             if (isset($value['_pagination_limit'])) {
                 $recurring_date->occurrences->setLimit($value['_pagination_limit']);
@@ -263,7 +285,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         //bd($page);
         if (!$value instanceof RecurringDate) return $sleepValue;
         // make the events sort by date ascending
-        $value->occurrences->sort('date');
+        // $value->occurrences->sort('date');
 
         // convert each Event to an array within sleepValue
         foreach ($value->occurrences as $occurrence) {
@@ -271,7 +293,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             if (!$occurrence->date) continue;
             // if($occurrence->formatted) throw new WireException('Formatted events cannot be saved');
             $sleepValue[] = array(
-              'data' => $occurrence->date, // note: 'date' is becoming 'data' (with an 'a')
+              'data' => $occurrence, // note: 'date' is becoming 'data' (with an 'a')
               'excluded' => $occurrence->excluded
             );
         }
@@ -292,7 +314,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 
     public function ___markupValue(Page $page, Field $field, $value = null, $property = '')
     {
-        if (!$value instanceof RecurrentD) $value = $page->get($field->name);
+        /*if (!$value instanceof RecurrentD) $value = $page->get($field->name);
         if (!$value instanceof EventArray || !$value->count()) return '';
         $a = [];
         foreach ($value as $event) {
@@ -302,7 +324,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti
                 $a[] = $this->sanitizer->entities1("$event->date");
             }
         }
-        return "<ul><li>" . implode("</li><li>", $a) . "</li></ul>";
+        return "<ul><li>" . implode("</li><li>", $a) . "</li></ul>";*/
+        return $value;
     }
 
     public function getMonths()

@@ -15,7 +15,7 @@ use DateTime;
 class Occurrence extends WireData {
 
     /**
-     * Construct a new Event
+     * Construct a new occurrence
      *
      */
     public function __construct() {
@@ -23,6 +23,7 @@ class Occurrence extends WireData {
         $this->set('date', '');
         $this->set('excluded', false);
         $this->set('formatted', false);
+        $this->set('format', 'Y-m-d');
         parent::__construct();
     }
 
@@ -30,7 +31,7 @@ class Occurrence extends WireData {
      * Set a value to the event: date, location or notes
      *
      * @param string $key
-     * @param string $value
+     * @param DateTime $value
      * @return WireData|self
      *
      */
@@ -43,11 +44,11 @@ class Occurrence extends WireData {
         if($key === 'excluded') {
             $value = false;
         }
-        if($key === 'date') {
+        /*if($key === 'date') {
             if($value instanceof \DateTime){
-                $value = $value->format('Y-m-d H:i:s');
+                $value = $value->format($this->format);
             }
-        }
+        }*/
         return parent::set($key, $value);
     }
 
@@ -62,6 +63,6 @@ class Occurrence extends WireData {
      *
      */
     public function __toString() {
-        return "$this->date";
+        return $this->date->format($this->format);
     }
 }

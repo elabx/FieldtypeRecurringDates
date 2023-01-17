@@ -1,38 +1,48 @@
 <?php namespace ProcessWire;
 
-/**
- * FieldtypeEvents: RecurringDateArray
- *
- * Contains multiple occurrences of an RRule definition
- *
- */
-class OccurrenceArray extends PaginatedArray {
+class OccurrenceArray extends PaginatedArray
+{
 
     /**
      * Is given item valid to store in this EventArray?
-     *
-     * @param Event $item
-     * @return bool
-     *
+     * @return Occurrence $item
      */
+
     public function makeBlankItem()
     {
         return $this->wire(new Occurrence());
     }
 
-    public function isValidItem($item) {
+    public function isValidItem($item)
+    {
         return $item instanceof Occurrence;
     }
 
     /**
-     * Make a string value to represent these events that can be used for comparison purposes
-     *
-     * @return string
-     *
+     * @return false|string
+     * @throws WireException
      */
-    public function __toString() {
-        $a = [];
-        foreach($this as $item) $a[] = (string) $item;
-        return implode("\n", $a);
+    public function __toString()
+    {
+        $pager = $this->modules->get("MarkupPagerNav");
+        $pager =  $pager->render($this, [
+          'listClass' => 'uk-pagination MarkupPagerNav',
+          'linkMarkup' => "<a @click='setPage' data-item='{index}' href=''><span>{out}</span></a>",
+        ]);
+        $a = [
+          'dates' => [],
+          'pagination' => [
+            'start' => $this->getStart(),
+            'limit' => $this->getLimit(),
+            'total' => $this->getTotal(),
+            'pagination_string' => $this->getPaginationString(),
+            'markup_pager' => $pager
+          ]
+        ];
+        foreach ($this->data as $item) $a['dates'][] = (string)$item;
+        //return implode("\n", $a);
+        bd($this);
+        return json_encode($a, true);
+
     }
 }

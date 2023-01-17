@@ -1,12 +1,15 @@
 <?php namespace ProcessWire;
 
-class RecurringDatesSettings extends WireData
+class RecurringDateSettings extends WireData
 {
-    public $limit_mode = "count";
-    public $rrule = "";
-    public $filters = [];
+    public $limit_mode;
+    public $rrule;
+    public $filters;
     public function __construct()
     {
+        $this->limit_mode = "count";
+        $this->rrule = "";
+        $this->filters = [];
         parent::__construct();
     }
 
@@ -22,7 +25,6 @@ class RecurringDatesSettings extends WireData
           'filters' => $this->filters,
           'rrule' => $this->rrule
         ];
-        $value = json_encode($value);
-        return $value;
+        return json_encode($value);
     }
 }

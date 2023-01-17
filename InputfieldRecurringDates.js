@@ -40,14 +40,8 @@ document.addEventListener('alpine:init', (e) => {
             },
             _settings: null,
             settings: null,
-            is_filtering: function (filter) {
-                if (this.rrule[filter] !== null || this.rrule[filter] !== undefined) {
-                    if (this.rrule[filter].length) {
-                        return true;
-                    }
-                }
-            },
-            show_table: false,
+
+            show_table: true,
             catalogues: {
                 filters: [
                     {label: "Months", value: 'BYMONTH'},
@@ -64,9 +58,29 @@ document.addEventListener('alpine:init', (e) => {
                     {name: 'Saturday', value: 'SAT'},
                 ],
             },
+            data: {
+                dates: [],
+                pagination: {
+                    start: 0,
+                    limit: null,
+                    total: null,
+                    sort: 'ascending',
+                    pagination_string: '',
+                    markup_pager: null,
+                }
+            },
 
             init: function () {
                 this.inputfield = this.$el.dataset.inputfieldName;
+                this.pageId = parseInt(this.$el.dataset.pageId);
+                this.fieldId = parseInt(this.$el.dataset.fieldId)
+                this.data.pagination.limit = this.$el.dataset.inputfieldLimit;
+                this.updateEventList();
+
+                /*this.$watch('data.pagination', (prop) => {
+                    this.updateEventList();
+                });*/
+
                 this.$watch('rrule', (prop) => {
                     this.saveString();
                 });
@@ -104,6 +118,52 @@ document.addEventListener('alpine:init', (e) => {
                     this.settings.limit_mode = "count";
                 }
             },
+
+
+            updateEventList: function () {
+                var url = new URL('fieldtype-recurring-dates/get-dates/', window.origin);
+                var params = {
+                    id: this.pageId,
+                    field_id: this.fieldId,
+                    limit: this.data.pagination.limit,
+                    start: this.data.pagination.start
+                }
+                console.log(params);
+                url.search = new URLSearchParams(params).toString();
+
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) alert(`Something went wrong: ${response.status} - ${response.statusText}`)
+                        return response.json()
+                    })
+                    .then(response => {
+
+                        this.data = response;
+                    });
+            },
+
+            previousPage(){
+                this.data.pagination.start -= this.data.pagination.limit
+                this.updateEventList()
+            },
+            nextPage(){
+                this.data.pagination.start += this.data.pagination.limit
+                this.updateEventList()
+            },
+
+            is_filtering: function (filter) {
+                if (this.rrule[filter] !== null || this.rrule[filter] !== undefined) {
+                    if (this.rrule[filter].length) {
+                        return true;
+                    }
+                }
+            },
+
+
             cloneObject: function (obj) {
                 // basic type deep copy
                 if (obj === null || obj === undefined || typeof obj !== 'object') {
