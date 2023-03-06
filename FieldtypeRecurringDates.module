@@ -90,7 +90,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti
      */
     public function hookAfterFieldAdded($event)
     {
-        bd('extra table added');
         $item = $event->arguments(0);
         if ($item->type->name == $this->name) {
             $table_name = $this->getExtrasTableName($item);
@@ -246,25 +245,13 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         if ($this->isSettingsValue($value)) {
             $recurring_date->settings = $value['settings'];
             $rrule_value = json_decode($value['rrule'], true);
-            /*if (is_array($rrule_value['DTSTART'])) {
-                $d = new \DateTime($rrule_value['DTSTART']['date'],
-                  new \DateTimeZone($rrule_value['DTSTART']['timezone']));
-                $rrule_value['DTSTART'] = $d;
-            }
-            bd($rrule_value);*/
             $rrule = new RRule($rrule_value);
-            //bd($rrule);
             $recurring_date->rrule = $rrule;
         } else {
             $settings = $this->getSettings($page, $field);
             if ($settings) {
                 $recurring_date->settings = $settings->settings;
                 $rrule_value = json_decode($settings->rrule, true);
-                /*if (is_array($rrule_value['DTSTART'])) {
-                    $d = new \DateTime($rrule_value['DTSTART']['date'],
-                      new \DateTimeZone($rrule_value['DTSTART']['timezone']));
-                    $rrule_value['DTSTART'] = $d;
-                }*/
                 $rrule = new RRule($rrule_value);
                 $recurring_date->rrule = $rrule;
             }
@@ -293,7 +280,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     }
 
     /**
-     * Given an EventArray value, convert the value back to an array for storage in DB
      *
      * @param Page $page
      * @param Field $field
@@ -304,13 +290,10 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 
     public function ___sleepValue(Page $page, Field $field, $value)
     {
-        bd($value->rrule);
-        bd($value->settings);
         $sleepValue = array();
         if ($value->rrule) {
             $this->saveSettings($page, $field, $value);
             foreach ($value->rrule as $date) {
-                bd($date);
                 $occurrence_date = new Occurrence();
                 $occurrence_date->excluded = false;
                 $occurrence_date->date = $date;
@@ -345,17 +328,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 
     public function ___markupValue(Page $page, Field $field, $value = null, $property = '')
     {
-        /*if (!$value instanceof RecurrentD) $value = $page->get($field->name);
-        if (!$value instanceof EventArray || !$value->count()) return '';
-        $a = [];
-        foreach ($value as $event) {
-            if ($property) {
-                $a[] = $this->sanitizer->entities1($event->get($property));
-            } else {
-                $a[] = $this->sanitizer->entities1("$event->date");
-            }
-        }
-        return "<ul><li>" . implode("</li><li>", $a) . "</li></ul>";*/
         return $value;
     }
 
@@ -495,6 +467,12 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     public function getExtrasTableName(Field $field)
     {
         return $field->getTable() . self::EXTRAS_TABLE_NAME_SUFFIX;
+    }
+
+    public function getMatchQuery($query, $table, $subfield, $operator, $value)
+    {
+        $value = wireDatetime('Y-m-d H:i:s ', $value);
+        return parent::getMatchQuery($query, $table, $subfield, $operator, $value);
     }
 
 }

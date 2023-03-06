@@ -2,8 +2,18 @@ This is a pre-release please do not use in production.
 
 # FieldtypeRecurringDates
 
-Fieldtype for definining recurring dates according to [RFC-RFC 5545](https://www.rfc-editor.org/rfc/rfc5545#section-3.3.10) and the awesome library
+Fieldtype and Inputfield for definining recurring dates according to [RFC-RFC 5545](https://www.rfc-editor.org/rfc/rfc5545#section-3.3.10) and the awesome library
 [php-rrule](https://github.com/rlanvin/php-rrule)
+
+This module will save the RRules occurrences in the database to be queried later. 
+
+# Find pages with fields
+
+Use date values valid for date selectors. 
+
+````
+$pages->find('recurring_meetings <= $data, recurring_meetings>=')
+````
 
 # Finding occurrences
 
