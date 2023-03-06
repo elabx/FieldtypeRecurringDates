@@ -5,6 +5,16 @@ This is a pre-release please do not use in production.
 Fieldtype and Inputfield for definining recurring dates according to [RFC-RFC 5545](https://www.rfc-editor.org/rfc/rfc5545#section-3.3.10) and the awesome library
 [php-rrule](https://github.com/rlanvin/php-rrule)
 
+# Installation
+
+```
+composer require elabx/fieldtype-recurring-dates
+```
+
+Make sure to install both FieldtyeRecurringDates and AlpineJS modules. Additionally you may install RecurringDatesFinder for search operations.
+
+Or download through the processwire modules directory. 
+
 This module will save the RRules occurrences in the database to be queried later. 
 
 # Find pages with fields
@@ -19,13 +29,17 @@ $pages->find('recurring_meetings=>today')
 
 You can use the module included in this same package to find the rules occurrences:
 
+`$start` and `$end` value are any acceptable value for [$datetime](https://processwire.com/api/ref/wire-date-time/)
 
 ```
 $finder = $modules->get('ReccurringDatesFinder')
 $output = $finder->find(
+     // from date 
+    'today', 
+    // to date
+    '+30 days', 
     $selector, [
-        'fields' => [
-            // Will find event occurrences in fields specified in this array 
+        'fields' => [ // Will find event occurrences in fields specified in this array 
             'recurring_meetings',
             'recurring_events'
         ]

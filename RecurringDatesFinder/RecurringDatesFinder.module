@@ -51,9 +51,9 @@ class RecurringDatesFinder extends WireData implements Module
         $end = $this->sanitizer->date($end);
 
         if ($start)
-            $start = $this->datetime('Y-m-d H:i:s', $start);
+            $start = $this->datetime->date('Y-m-d H:i:s', $start);
         if ($end)
-            $end = $this->datetime('Y-m-d H:i:s', $end);
+            $end = $this->datetime->date('Y-m-d H:i:s', $end);
 
         /** @var Field $field */
         foreach ($recurring_fields as $field) {
