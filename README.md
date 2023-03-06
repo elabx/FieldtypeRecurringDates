@@ -12,7 +12,7 @@ This module will save the RRules occurrences in the database to be queried later
 Use date values valid for date selectors. 
 
 ````
-$pages->find('recurring_meetings <= $data, recurring_meetings>=')
+$pages->find('recurring_meetings=>today')
 ````
 
 # Finding occurrences
