@@ -11,133 +11,177 @@ use RRule\RRule;
  */
 class InputfieldRecurringDates extends Inputfield
 {
-		public static function getModuleInfo()
-		{
-				return array(
-					'title' => 'Recurring Dates',
-					'version' => 001,
-					'summary' => 'Field that lets you define a recurring date rule.',
-					'icon' => 'calendar-o',
-					'requires' => 'AlpineJS'
-				);
-		}
+    public static function getModuleInfo()
+    {
+        return array(
+          'title' => 'Recurring Dates',
+          'version' => 001,
+          'summary' => 'Field that lets you define a recurring date rule.',
+          'icon' => 'calendar-o',
+          'requires' => 'AlpineJS'
+        );
+    }
 
-		public function __construct()
-		{
-				parent::__construct();
-		}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-		public function init()
-		{
-				// Load Alpine.js in <header>
+    public function init()
+    {
+        // Load Alpine.js in <header>
         $this->setAttribute('pageSize', 10);
-				$this->modules->AlpineJS;
-		}
+        $this->set('startDateInput', 'date');
+        $this->modules->AlpineJS;
+    }
 
-		public function ___render()
-		{
-				/** @var RecurringDate $recurring_dates */
-				$recurring_dates = $this->value;
-				$this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
+    public function ___render()
+    {
+        /** @var RecurringDate $recurring_dates */
+        $recurring_dates = $this->value;
+        $this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
+        $occurrences = $recurring_dates->occurrences;
 
-				$occurrences = $recurring_dates->occurrences;
-				if ($recurring_dates->rrule) {
-						$rule_json = json_encode($recurring_dates->rrule->getRule());
-				}
+        if($recurring_dates->rrule){
+            $rrule_array = $recurring_dates->rrule->getRule();
 
-				$this->setAttribute('class', 'uk-input main-input');
-				if ($rule_json) {
-						$this->setAttribute('value', [$rule_json]);
-				}
-				$this->setAttribute('x-ref', 'main-input');
-				$this->setAttribute('x-model', '_rrule');
-				$this->setAttribute('data-rrule', $rule_json);
-				$this->setAttribute('type', 'hidden');
-				$this->setAttribute('data-settings', $recurring_dates->settings);
+            if ($this->startDateInput == "datetime") {
+                $rrule_array['DTSTART'] = (new \DateTime($rrule_array['DTSTART']))->format('Y-m-d H:i:s');
+            } else {
+                $rrule_array['DTSTART'] = (new \DateTime($rrule_array['DTSTART']))->format('Y-m-d');
+            }
+            if ($recurring_dates->rrule) {
+                $rule_json = json_encode($rrule_array);
+            }
+        }else{
+            $rule_json = '';
+        }
 
-				$out = "";
-				$filePath = "{$this->config->paths->siteModules}FieldtypeRecurringDates/partials/AlpineComponent.php";
-				$alpineComponent = wireRenderFile($filePath, [
-					'fieldtype' => $this->hasFieldtype,
-					'inputfield' => $this,
-					'occurrences' => $occurrences,
-					'inputfieldValue' => $recurring_dates
-				]);
+        $this->setAttribute('class', 'uk-input main-input');
+        if ($rule_json) {
+            $this->setAttribute('value', [$rule_json]);
+        }
+        $this->setAttribute('x-ref', 'main-input');
+        $this->setAttribute('x-model', '_rrule');
+        $this->setAttribute('data-rrule', $rule_json);
+        $this->setAttribute('type', 'hidden');
+        $this->setAttribute('data-settings', $recurring_dates->settings);
 
-				$out .= $alpineComponent;
-				return $out;
-		}
+        $out = "";
+        $filePath = "{$this->config->paths->siteModules}FieldtypeRecurringDates/partials/AlpineComponent.php";
+        $alpineComponent = wireRenderFile($filePath, [
+          'fieldtype' => $this->hasFieldtype,
+          'inputfield' => $this,
+          'occurrences' => $occurrences,
+          'inputfieldValue' => $recurring_dates
+        ]);
+
+        $out .= $alpineComponent;
+        return $out;
+    }
 
 
-		public function ___renderValue()
-		{
-				$fieldtype = $this->hasFieldtype;
-				return $fieldtype->markupValue($this->hasPage, $this->hasField, $this->value);
-		}
+    public function ___renderValue()
+    {
+        $fieldtype = $this->hasFieldtype;
+        return $fieldtype->markupValue($this->hasPage, $this->hasField, $this->value);
+    }
 
-    public function __getEventsUrl(){
+    public function __getEventsUrl()
+    {
 
     }
 
-		public function ___processInput(WireInputData $input)
-		{
-				$name = $this->attr('name');
-				$recurring_date_obj = new RecurringDate();
-				$value = $input[$name];
-				$settings = $input[$name . "_settings"];
+    public function ___processInput(WireInputData $input)
+    {
+        $name = $this->attr('name');
+        $recurring_date_obj = new RecurringDate();
+        $value = $input[$name];
+        $settings = $input[$name . "_settings"];
+        if ($value === "") return $recurring_date_obj;
 
-				if ($value === "") return $recurring_date_obj;
+        $recurring_date_obj->settings = $settings;
+        $settings_obj = json_decode($settings, true);
 
-				$recurring_date_obj->settings = $settings;
-				$settings_obj = json_decode($settings, true);
+        $value = json_decode($value, true);
+        if (!$value['DTSTART']) {
+            return $recurring_date_obj;
+        }
+        if ($settings_obj['limit_mode'] == "count") {
+            unset($value['UNTIL']);
+        }
+        if ($settings_obj['limit_mode'] == "until") {
+            unset($value['COUNT']);
+        }
+        // New RRule from input
+        $rrule = new RRule($value);
+        $recurring_date_obj->rrule = $rrule;
 
-				$value = json_decode($value, true);
-				if (!$value['DTSTART']) {
-						return $recurring_date_obj;
-				}
-				if ($settings_obj['limit_mode'] == "count") {
-						unset($value['UNTIL']);
-				}
-				if ($settings_obj['limit_mode'] == "until") {
-						unset($value['COUNT']);
-				}
-				// New RRule from input
-				$rrule = new RRule($value);
-				$recurring_date_obj->rrule = $rrule;
+        // Compare existing value with new RRule array
+        $existing_rule = null;
+        if ($this->attr('value')->rrule) {
+            $existing_rule = $this->attr('value')->rrule->getRule();
+        }
 
-				// Compare existing value with new RRule array
-				$existing_rule = null;
-				if ($this->attr('value')->rrule) {
-						$existing_rule = $this->attr('value')->rrule->getRule();
-				}
+        // Check if RRule array value is different than existing one
+        if ($existing_rule !== $rrule->getRule()) {
 
-				// Check if RRule array value is different than existing one
-				if ($existing_rule !== $rrule->getRule()) {
-						foreach ($rrule as $date) {
-								$occurrence_date = new Occurrence();
-								$occurrence_date->excluded = false;
-								$occurrence_date->date = $date;
-								$recurring_date_obj->occurrences->add($occurrence_date);
-						}
+            $this->val($recurring_date_obj);
+            $this->trackChange('value');
+            return $this;
+        }
+        return $this;
 
-						$this->val($recurring_date_obj);
-						$this->trackChange('value');
-						return $this;
-				}
-				return $this;
+    }
 
-		}
+    /**
+     * Get setting
+     *
+     * @param string $key
+     * @return mixed
+     *
+     */
 
- public function ___getConfigInputfields() {
-       // Get the defaults and $inputfields wrapper we can add to
-       $inputfields = parent::___getConfigInputfields();
+    public function getDateStartInputType()
+    {
+        switch ($this->startDateInput) {
+            case "datetime":
+                return "datetime-local";
+            default:
+                return "date";
+        }
+    }
+
+    public function ___getConfigInputfields()
+    {
+        // Get the defaults and $inputfields wrapper we can add to
+        $inputfields = parent::___getConfigInputfields();
         // Add a new Inputfield to it
         $f = $this->modules->get('InputfieldInteger');
         $f->attr('name', 'pageSize');
-        $f->label = 'Page size';
+        $f->label = $this->_('Page size');
         $f->value = $this->pageSize;
         $inputfields->add($f);
 
-       return $inputfields;
-     }
+        /** @var InputfieldSelect $f */
+        $f = $this->modules->get('InputfieldSelect');
+        $f->attr('name', 'startDateInput');
+        $f->label = $this->_("Input type for start date");
+        $f->addOptions([
+          'date' => $this->_('Date'),
+          'datetime' => $this->_('Both date and time')]);
+        //bd($this->startDateInput);
+        $f->val($this->getSetting('startDateInput'));
+
+        $inputfields->add($f);
+
+        return $inputfields;
+    }
+
+    public function ___getConfigAllowContext(Field $field)
+    {
+        $a = array('pageSize', 'startDateInput');
+        return array_merge(parent::___getConfigAllowContext($field), $a);
+    }
+
 }

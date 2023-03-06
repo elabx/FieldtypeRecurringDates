@@ -77,9 +77,6 @@ document.addEventListener('alpine:init', (e) => {
                 this.data.pagination.limit = this.$el.dataset.inputfieldLimit;
                 this.updateEventList();
 
-                /*this.$watch('data.pagination', (prop) => {
-                    this.updateEventList();
-                });*/
 
                 this.$watch('rrule', (prop) => {
                     this.saveString();
@@ -111,10 +108,7 @@ document.addEventListener('alpine:init', (e) => {
                     this.rrule = JSON.parse(json_rrule);
                     this._rrule = JSON.stringify(this.rrule);
                 } else {
-                    //console.log(this.rrule);
-                    /*var now = new Date();
-                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                    this.rrule.DTSTART = now.toISOString().slice(0, 16);*/
+
                     this.settings.limit_mode = "count";
                 }
             },

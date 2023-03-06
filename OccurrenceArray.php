@@ -3,17 +3,12 @@
 class OccurrenceArray extends PaginatedArray
 {
 
-    /**
-     * Is given item valid to store in this EventArray?
-     * @return Occurrence $item
-     */
-
     public function makeBlankItem()
     {
         return $this->wire(new Occurrence());
     }
 
-    public function isValidItem($item)
+    public function isValidItem($item): bool
     {
         return $item instanceof Occurrence;
     }
@@ -40,8 +35,6 @@ class OccurrenceArray extends PaginatedArray
           ]
         ];
         foreach ($this->data as $item) $a['dates'][] = (string)$item;
-        //return implode("\n", $a);
-        bd($this);
         return json_encode($a, true);
 
     }

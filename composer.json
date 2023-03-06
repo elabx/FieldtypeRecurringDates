@@ -16,6 +16,6 @@
     "wireframe-framework/processwire-composer-installer": "^1.1",
     "php": ">=7.3",
     "rlanvin/php-rrule": "^2.3",
-    "elabx/modulejs-alpinejs": "dev-main"
+    "elabx/processwire-alpinejs": "^0.0.1"
   }
 }

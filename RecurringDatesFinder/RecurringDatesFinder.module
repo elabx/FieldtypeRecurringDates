@@ -10,22 +10,26 @@ class RecurringDatesFinder extends WireData implements Module
           'icon' => 'search'
         );
     }
+
     /**
-     * @param $start
-     * @param $end
-     * @param $selector
-     * @param $options
-     * @return array|WireArray|void
+     * @param $start string|int
+     * @param $end string|int
+     * @param $selector string
+     * @param $options array
+     * @return WireArray
      * @throws WireException
      */
     public function ___getRecurringFieldQueries($start, $end, $selector, $options)
     {
         $selected_pages = null;
+        $field_queries = new WireArray();
         $recurring_fields = $this->fields->find('type=FieldtypeRecurringDates');
-        if (!$recurring_fields->count) return;
+        if (!$recurring_fields->count) return $field_queries;
+
         $default = [
           'fields' => '',
         ];
+
 
         $options = array_merge($default, $options);
         if ($options['fields']) {
@@ -37,9 +41,11 @@ class RecurringDatesFinder extends WireData implements Module
         }
 
         if ($selector) {
-            $selector .= ",$recurring_fields>=$start, $recurring_fields<=$end";
-            $selected_pages = $this->pages->findIDs($selector);
+            $selector .= ", $recurring_fields>=$start, $recurring_fields<=$end";
+            $selected_pages = $this->pages->findRaw($selector, 'title');
         }
+        if (!count($selected_pages)) return $field_queries;
+        $selected_pages = array_keys($selected_pages);
 
         $start = $this->sanitizer->date($start);
         $end = $this->sanitizer->date($end);
@@ -49,11 +55,8 @@ class RecurringDatesFinder extends WireData implements Module
         if ($end)
             $end = $this->datetime('Y-m-d H:i:s', $end);
 
-        /** @var DatabaseQuerySelect $subquery */
-        $field_queries = new WireArray();
-
+        /** @var Field $field */
         foreach ($recurring_fields as $field) {
-            /** @var Field $field */
             $table = $field->getTable();
             $query = "SELECT '{$field->name}' as field, data as date, pages_id as id FROM $table ";
             $where = [];
@@ -71,6 +74,7 @@ class RecurringDatesFinder extends WireData implements Module
             }
             $field_queries->add($query);
         }
+
         return $field_queries;
     }
 
@@ -81,19 +85,21 @@ class RecurringDatesFinder extends WireData implements Module
             $union_query = $field_queries->implode(" UNION All ", function ($item) {
                 return $item;
             });
-            $union_query .= "ORDER BY date";
+            $union_query .= "ORDER BY date ASC";
             $pdo = $this->database->prepare($union_query);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
             return $pdo->fetchAll(\PDO::FETCH_ASSOC);
-        } else {
-
+        } elseif($field_queries->count == 1) {
             $pdo = $this->database->prepare($field_queries->first());
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
             return $pdo->fetchAll(\PDO::FETCH_ASSOC);
+        }else{
+            return false;
         }
+
     }
 }

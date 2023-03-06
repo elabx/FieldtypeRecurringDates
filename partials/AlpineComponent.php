@@ -29,11 +29,10 @@
                             <div>
                                 <label class="uk-form-label">Starts on:</label>
                                 <input x-ref="dtstart-datetime-input"
-                                       type="date"
+                                       type="<?=$inputfield->getDateStartInputType()?>"
                                        x-model="rrule.DTSTART"
                                        class="uk-input" value="">
                             </div>
-
                         </div>
                     </div>
 
