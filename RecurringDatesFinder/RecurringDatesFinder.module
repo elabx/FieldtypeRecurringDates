@@ -77,7 +77,16 @@ class RecurringDatesFinder extends WireData implements Module
 
         return $field_queries;
     }
-
+    
+    /**
+     * @param $start string|int
+     * @param $end string|int
+     * @param $selector string
+     * @param $options array
+     *  - `fields` (string) : Selector.
+     * @return array|false
+     * @throws WireException
+     */
     public function find($start, $end, $selector = null, $options = array())
     {
         $field_queries = $this->getRecurringFieldQueries($start, $end, $selector, $options);
