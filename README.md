@@ -20,3 +20,15 @@ $output = $calendarRenderer->render(
     ]
 ```
 
+# TODO
+
+- [ ] Add support for BYSETPOS
+- [ ] Add support for 'Never' option.
+
+# Wishlist
+
+- [ ] Support for plain text RRule. 
+- [ ] Add support for BYWEEKNO, BYYEARDAY, BYMONTHDAY, BYMINUTE, BYHOUR, BYMINUTE, BYSECOND .
+- [ ] Add support to modify RRule before saving? Maybe skips
+- [ ] Use RSet instead of RRule?
+
