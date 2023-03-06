@@ -21,7 +21,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti
           'version' => 001,
           'summary' => 'Field that stores recurring events from rrule input.',
           'icon' => 'calendar-o',
-          'installs' => 'InputfieldRecurringDates'
+          'installs' => 'InputfieldRecurringDates',
+          'requires' => 'ProcessWire>=3.0.184, AlpineJS'
         );
     }
 
