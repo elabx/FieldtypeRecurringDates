@@ -9,8 +9,10 @@ Fieldtype for definining recurring dates according to [RFC-RFC 5545](https://www
 
 You can use the module included in this same package to find the rules occurrences:
 
+
 ```
-$output = $calendarRenderer->render(
+$finder = $modules->get('ReccurringDatesFinder')
+$output = $finder->find(
     $selector, [
         'fields' => [
             // Will find event occurrences in fields specified in this array 
@@ -19,6 +21,10 @@ $output = $calendarRenderer->render(
         ]
     ]
 ```
+
+This method will return the SQL UNION result of specified fields.  
+
+You can also hook into getRecurringFieldQueries() to add queries that will get added to the final UNION query.  
 
 # TODO
 
