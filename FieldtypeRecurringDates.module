@@ -2,14 +2,7 @@
 
 use RRule\RRule;
 
-/**
- * FieldtypeRecurringDates
- *
- * Fieldtype for a field that stores events each with a date and title
- *
- * This is an example of creating your own FieldtypeMulti to represent a spreadsheet type table of information.
- *
- */
+
 class FieldtypeRecurringDates extends FieldtypeMulti
 {
 
@@ -302,14 +295,11 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             }
         }
         if (!$value instanceof RecurringDate) return $sleepValue;
-
-        // make the events sort by date ascending
-        // $value->occurrences->sort('date');
-
+        
         foreach ($value->occurrences as $occurrence) {
 
             $sleepValue[] = array(
-              'data' => $occurrence, // note: 'date' is becoming 'data' (with an 'a')
+              'data' => (string) $occurrence, // note: 'date' is becoming 'data' (with an 'a')
               // 'excluded' => $occurrence->excluded
             );
         }
