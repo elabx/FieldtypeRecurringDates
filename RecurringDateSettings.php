@@ -7,7 +7,7 @@ class RecurringDateSettings extends WireData
     public $filters;
     public function __construct()
     {
-        $this->limit_mode = "count";
+        $this->limit_mode = "";
         $this->rrule = "";
         $this->filters = [];
         parent::__construct();

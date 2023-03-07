@@ -111,7 +111,7 @@ document.addEventListener('alpine:init', (e) => {
                     this._rrule = JSON.stringify(this.rrule);
                 } else {
 
-                    this.settings.limit_mode = "count";
+                    //this.settings.limit_mode = "count";
                 }
             },
 
@@ -198,7 +198,6 @@ document.addEventListener('alpine:init', (e) => {
                 }
                 if (this.settings.limit_mode === "never") {
                     delete rrule_copy.UNTIL
-                    console.log(this.hard_limit);
                     rrule_copy.COUNT = this.hard_limit;
                 }
                 console.log(rrule_copy);

@@ -91,6 +91,7 @@
                                         <input x-model.number="rrule.COUNT"
                                                min="1"
                                                :disabled="settings.limit_mode !== 'count'"
+                                               :name="`count-options-${inputfield}`"
                                                class="uk-input uk-margin-small-left"
                                                type="number">
                                             <span class="uk-text-small uk-margin-small-left">occurrences</span>
