@@ -34,7 +34,18 @@ class OccurrenceArray extends PaginatedArray
             'markup_pager' => $pager
           ]
         ];
-        foreach ($this->data as $item) $a['dates'][] = (string)$item;
+        foreach ($this->data as $item) {
+            /** @var $item Occurrence */
+            $data = [
+                'formatted' => (string) $item,
+                'day' => $item->format('d'),
+                'month' => $item->format('m'),
+                'year' => $item->format('Y')
+            ];
+            
+            $a['dates'][] = $data;
+            
+        }
         return json_encode($a, true);
 
     }

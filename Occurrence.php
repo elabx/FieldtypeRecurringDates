@@ -21,7 +21,7 @@ class Occurrence extends WireData {
     public function __construct() {
         // define the fields that represent our event (and their default/blank values)
         $this->set('date', '');
-        $this->set('excluded', false);
+        // $this->set('excluded', false);
         $this->set('formatted', false);
         $this->set('format', 'Y-m-d');
         parent::__construct();
@@ -36,24 +36,14 @@ class Occurrence extends WireData {
      *
      */
     public function set($key, $value) {
-        /*if($key === 'date') {
-            $value = $value ? wireDate('Y-m-d', $value) : '';
-        } else if($key === 'title') {
-            $value = $this->sanitizer->text($value);
-        }*/
-        if($key === 'excluded') {
+        /*if($key === 'excluded') {
             $value = false;
-        }
-        /*if($key === 'date') {
-            if($value instanceof \DateTime){
-                $value = $value->format($this->format);
-            }
         }*/
         return parent::set($key, $value);
     }
 
-    public function formatDate($format = "U"){
-        $this->date = $this->date->format($format);
+    public function format($format = "U"){
+        return $this->date->format($format);
     }
 
     /**

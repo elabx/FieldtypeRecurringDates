@@ -79,7 +79,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $field_name = $event->fields->get($field)->name;
         $page = $event->pages->get($page);
         $value = $page->$field_name("start=$start, limit=$limit, sort=data");
-        //bd($value);
+        bd($value->occurrences);
         return $value->occurrences;
     }
 
@@ -172,7 +172,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
         $schema['keys']['primary'] = 'PRIMARY KEY (id)';
         $schema['data'] = 'datetime NOT NULL';
-        $schema['excluded'] = 'tinyint NOT NULL';
+        // $schema['excluded'] = 'tinyint NOT NULL';
         $schema['keys']['data'] = 'KEY data (data)';
         return $schema;
     }
@@ -270,7 +270,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             foreach ($value as $key => $v) {
                 $occurrence = new Occurrence();
                 $occurrence->date = (new \DateTime($v['data']));
-                $occurrence->excluded = $v['excluded'] ? true : false;
+                // $occurrence->excluded = $v['excluded'] ? true : false;
                 $occurrence->resetTrackChanges();
                 $recurring_date->occurrences->add($occurrence);
             }
@@ -296,7 +296,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             $this->saveSettings($page, $field, $value);
             foreach ($value->rrule as $date) {
                 $occurrence_date = new Occurrence();
-                $occurrence_date->excluded = false;
+                // $occurrence_date->excluded = false;
                 $occurrence_date->date = $date;
                 $value->occurrences->add($occurrence_date);
             }
@@ -310,7 +310,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 
             $sleepValue[] = array(
               'data' => $occurrence, // note: 'date' is becoming 'data' (with an 'a')
-              'excluded' => $occurrence->excluded
+              // 'excluded' => $occurrence->excluded
             );
         }
         return $sleepValue;

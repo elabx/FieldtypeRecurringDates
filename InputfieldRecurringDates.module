@@ -32,6 +32,7 @@ class InputfieldRecurringDates extends Inputfield
         // Load Alpine.js in <header>
         $this->setAttribute('pageSize', 10);
         $this->set('startDateInput', 'date');
+        $this->set('hardLimit', 5000);
         $this->modules->AlpineJS;
     }
 
@@ -175,12 +176,20 @@ class InputfieldRecurringDates extends Inputfield
 
         $inputfields->add($f);
 
+        /** @var InputfieldInteger $f */
+        $f = $this->modules->get('InputfieldInteger');
+        $f->attr('name', 'hardLimit');
+        $f->label = $this->_("Hard limit on the 'Never' option of the interface. Otherwise, the RRule calculation would run into an infinite loop");
+        $f->val($this->getSetting('hardLimit'));
+
+        $inputfields->add($f);
+
         return $inputfields;
     }
 
     public function ___getConfigAllowContext(Field $field)
     {
-        $a = array('pageSize', 'startDateInput');
+        $a = array('pageSize', 'startDateInput', 'hardLimit');
         return array_merge(parent::___getConfigAllowContext($field), $a);
     }
 

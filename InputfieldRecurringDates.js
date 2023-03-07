@@ -32,7 +32,7 @@ document.addEventListener('alpine:init', (e) => {
                 DTSTART: "",
                 FREQ: "DAILY",
                 INTERVAL: 1,
-                COUNT: 1,
+                COUNT: 0,
                 UNTIL: "",
                 BYDAY: [],
                 BYMONTH: [],
@@ -40,8 +40,8 @@ document.addEventListener('alpine:init', (e) => {
             },
             _settings: null,
             settings: null,
-
-            show_table: true,
+            hard_limit: null,
+            show_table: false,
             catalogues: {
                 filters: [
                     {label: "Months", value: 'BYMONTH'},
@@ -74,6 +74,8 @@ document.addEventListener('alpine:init', (e) => {
                 this.inputfield = this.$el.dataset.inputfieldName;
                 this.pageId = parseInt(this.$el.dataset.pageId);
                 this.fieldId = parseInt(this.$el.dataset.fieldId)
+                this.hard_limit = parseInt(this.$el.dataset.hardLimit)
+
                 this.data.pagination.limit = this.$el.dataset.inputfieldLimit;
                 this.updateEventList();
 
@@ -122,7 +124,7 @@ document.addEventListener('alpine:init', (e) => {
                     limit: this.data.pagination.limit,
                     start: this.data.pagination.start
                 }
-                console.log(params);
+
                 url.search = new URLSearchParams(params).toString();
 
                 fetch(url, {
@@ -157,6 +159,13 @@ document.addEventListener('alpine:init', (e) => {
                 }
             },
 
+            getToggleText(){
+                if(!this.show_table) {
+                    return "Show dates <span uk-icon='chevron-down'></span>";
+                }else{
+                    return "Hide dates <span uk-icon='chevron-up'></span>";
+                }
+            },
 
             cloneObject: function (obj) {
                 // basic type deep copy
@@ -178,15 +187,21 @@ document.addEventListener('alpine:init', (e) => {
                 }
                 return cloneO;
             },
+
             saveString: function () {
                 var rrule_copy = this.cloneObject(this.rrule);
-
-                if (this.limit_mode === "count") {
+                if (this.settings.limit_mode === "count") {
                     delete rrule_copy.UNTIL
                 }
-                if (this.limit_mode === "until") {
+                if (this.settings.limit_mode === "until") {
                     delete rrule_copy.COUNT
                 }
+                if (this.settings.limit_mode === "never") {
+                    delete rrule_copy.UNTIL
+                    console.log(this.hard_limit);
+                    rrule_copy.COUNT = this.hard_limit;
+                }
+                console.log(rrule_copy);
                 var json_string = JSON.stringify(rrule_copy);
                 if (this.$refs['pre-debug'] !== undefined) {
                     this.$refs['pre-debug'].innerText = JSON.stringify(rrule_copy, null, 2);

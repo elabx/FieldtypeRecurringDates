@@ -7,6 +7,7 @@
 <div data-page-id="<?= $inputfield->hasPage->id ?>"
      data-field-id="<?= $inputfield->hasField->id ?>"
      data-inputfield-name="<?= $inputfield->name ?>"
+     data-hard-limit="<?= $inputfield->hardLimit ?>"
      data-inputfield-limit="<?= $inputfield->pageSize ?>"
      defer-x-data="recurringDatesInput">
     <input <?= $inputfield->getAttributesString() ?>>
@@ -29,7 +30,7 @@
                             <div>
                                 <label class="uk-form-label">Starts on:</label>
                                 <input x-ref="dtstart-datetime-input"
-                                       type="<?=$inputfield->getDateStartInputType()?>"
+                                       type="<?= $inputfield->getDateStartInputType() ?>"
                                        x-model="rrule.DTSTART"
                                        class="uk-input" value="">
                             </div>
@@ -40,7 +41,8 @@
 
                         <div class="">
                             <div class="uk-form-controls">
-                                <div class="uk-form-label">Ends:</div>
+
+                                <div class="uk-form-label uk-margin-small">Ends:</div>
 
                                 <div class="uk-grid uk-child-width-1-1 uk-grid-small" uk-grid>
                                     <div>
@@ -53,6 +55,10 @@
                                                    :name="`limit-rule-options-${inputfield}`">
                                             Never
                                         </label>
+                                        <div class="uk-inline"
+                                             uk-tooltip="Hard limits events to a count of <?= $inputfield->hardLimit ?>">
+                                            <span uk-icon="ratio: 0.8; icon:question"></span>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -227,38 +233,44 @@
     <div class="uk-width-1-1@m uk-margin-auto uk-margin">
         <div class="uk-box-shadow-small ">
             <div class="uk-width-1-1 ">
-                <div class="uk-flex uk-padding-small uk-flex-middle uk-flex-between">
-                    <div x-on:click="show_table = !show_table">
-                        <i class="uk-margin-small-right" uk-icon="list">
-                            <?php /** @var $occurrences RecurringDate */ ?>
-                        </i>
-                        <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
-                    </div>
-                    <div>
-                        <div class="uk-grid-small uk-grid" uk-grid>
-                            <div>
-                                <select @change="updateEventList()" x-model.number="data.pagination.limit">
-                                    <optgroup label="Default limit:">
-                                        <option selected value="<?= $inputfield->pageSize ?>">
-                                            <?= $inputfield->pageSize ?>
-                                        </option>
-                                    </optgroup>
+                <div class="">
+                    <div class="uk-flex  uk-flex-middle uk-flex-between uk-padding-small">
+                        <div x-on:click="show_table = !show_table">
+                            <i class="uk-margin-small-right" uk-icon="list">
+                                <?php /** @var $occurrences RecurringDate */ ?>
+                            </i>
+                            <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
+                        </div>
 
-                                    <optgroup label="Limits:">
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-                            <div>
-                                <button class="ui-button" type="button">
-                                    Show
-                                </button>
+                        <div>
+                            <div class="uk-grid-small uk-grid" uk-grid>
+                                <div>
+                                    <button x-on:click="show_table = !show_table" type="button" class="uk-button uk-button-link" x-html="getToggleText()"></button>
+                                </div>
+                                <div>
+                                    <select @change="updateEventList()" x-model.number="data.pagination.limit">
+
+                                        <optgroup label="Default limit:">
+                                            <option selected value="<?= $inputfield->pageSize ?>">
+                                                <?= $inputfield->pageSize ?>
+                                            </option>
+                                        </optgroup>
+
+                                        <optgroup label="Limits:">
+                                            <option value="10">5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
                             </div>
                         </div>
+
                     </div>
+
                 </div>
             </div>
 
@@ -270,16 +282,16 @@
                            class="uk-table-small uk-table uk-table-striped">
                         <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Exclude</th>
+                            <th>Month</th>
+                            <th>Day</th>
+                            <th>Year</th>
                         </tr>
                         </thead>
                         <template x-for="date in data.dates">
                             <tr>
-                                <td x-text="date"></td>
-                                <td>
-                                    <input id="input-<?= $i ?>" type="checkbox">
-                                </td>
+                                <td x-text="date.month"></td>
+                                <td x-text="date.day"></td>
+                                <td x-text="date.year"></td>
                             </tr>
                         </template>
                     </table>
