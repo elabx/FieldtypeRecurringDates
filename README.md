@@ -2,6 +2,8 @@ This is a pre-release please do not use in production.
 
 # FieldtypeRecurringDates
 
+![inputfieldrecurringdates](https://user-images.githubusercontent.com/7674567/223284142-86c36b49-ac46-41b1-b85c-e01a7a4c9b64.png)
+
 Fieldtype and Inputfield for definining recurring dates according to [RFC-RFC 5545](https://www.rfc-editor.org/rfc/rfc5545#section-3.3.10) and the awesome library
 [php-rrule](https://github.com/rlanvin/php-rrule)
 
