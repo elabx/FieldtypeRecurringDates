@@ -19,7 +19,7 @@
         <?php /*echo $pre_text; */ ?>
     </pre>-->
 
-    <div class="uk-grid-divider uk-grid uk-child-width-1-2" uk-grid>
+    <div class="uk-grid-divider uk-grid uk-child-width-1-2@m" uk-grid>
 
         <div>
             <div uk-grid>
@@ -131,7 +131,7 @@
         <div>
 
             <span class="uk-form-label">Only on:</span>
-            <div class="uk-margin-top">
+            <div class="uk-margin-small-top">
 
                 <ul class="uk-list-divider uk-list">
                     <template x-for="filter in catalogues.filters">
@@ -232,43 +232,40 @@
     </div>
     <div class="uk-width-1-1@m uk-margin-auto uk-margin">
         <div class="uk-box-shadow-small ">
-            <div class="uk-width-1-1 ">
-                <div class="">
-                    <div class="uk-flex  uk-flex-middle uk-flex-between uk-padding-small">
-                        <div x-on:click="show_table = !show_table">
-                            <i class="uk-margin-small-right" uk-icon="list">
-                                <?php /** @var $occurrences RecurringDate */ ?>
-                            </i>
-                            <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
-                        </div>
+            <div class="uk-width-1-1 uk-padding-small">
+                <div class="uk-grid uk-flex-between" uk-grid>
+                    <div class="uk-width-1-1 uk-width-expand@m" x-on:click="show_table = !show_table">
+                        <i class="uk-margin-small-right" uk-icon="list">
+                            <?php /** @var $occurrences RecurringDate */ ?>
+                        </i>
+                        <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
+                    </div>
 
-                        <div>
-                            <div class="uk-grid-small uk-grid" uk-grid>
-                                <div>
-                                    <button x-on:click="show_table = !show_table" type="button" class="uk-button uk-button-link" x-html="getToggleText()"></button>
-                                </div>
-                                <div>
-                                    <select @change="updateEventList()" x-model.number="data.pagination.limit">
-
-                                        <optgroup label="Default limit:">
-                                            <option selected value="<?= $inputfield->pageSize ?>">
-                                                <?= $inputfield->pageSize ?>
-                                            </option>
-                                        </optgroup>
-
-                                        <optgroup label="Limits:">
-                                            <option value="10">5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-
+                    <div class="uk-width-1-1 uk-width-auto@m">
+                        <div class="uk-grid-small uk-flex-right uk-grid" uk-grid>
+                            <div>
+                                <button x-on:click="show_table = !show_table" type="button" class="uk-button uk-button-link" x-html="getToggleText()"></button>
                             </div>
-                        </div>
+                            <div>
+                                <select @change="updateEventList()" x-model.number="data.pagination.limit">
 
+                                    <optgroup label="Default limit:">
+                                        <option selected value="<?= $inputfield->pageSize ?>">
+                                            <?= $inputfield->pageSize ?>
+                                        </option>
+                                    </optgroup>
+
+                                    <optgroup label="Limits:">
+                                        <option value="10">5</option>
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                        </div>
                     </div>
 
                 </div>
