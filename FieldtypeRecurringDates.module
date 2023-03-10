@@ -7,17 +7,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 {
 
 
-    public static function getModuleInfo()
-    {
-        return array(
-          'title' => 'Recurring Dates',
-          'version' => 001,
-          'summary' => 'Field that stores recurring events from rrule input.',
-          'icon' => 'calendar-o',
-          'installs' => 'InputfieldRecurringDates',
-          'requires' => 'ProcessWire>=3.0.184, AlpineJS'
-        );
-    }
+
 
     const defaultLimit = 10;
     const EXTRAS_TABLE_NAME_SUFFIX = '_extras';

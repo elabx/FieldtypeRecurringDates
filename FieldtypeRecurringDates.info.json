@@ -1,0 +1,8 @@
+{
+  "title": "Recurring Dates",
+  "version": "0.0.1-alpha",
+  "summary": "Field that stores recurring events from RRule input.",
+  "icon": "calendar-o",
+  "installs": "InputfieldRecurringDates",
+  "requires": "ProcessWire>=3.0.184, AlpineJS"
+}

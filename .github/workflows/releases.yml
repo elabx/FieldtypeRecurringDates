@@ -15,6 +15,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v3.18.0
         with:
           github-token: ${{ secrets.github_token }}
+          version-file: './FieldtypeRecurringDates.info.json'
 
       - name: create release
         uses: actions/create-release@v1
