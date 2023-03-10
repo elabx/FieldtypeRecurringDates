@@ -163,10 +163,11 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     {
         $schema = parent::getDatabaseSchema($field);
         $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
-        $schema['keys']['primary'] = 'PRIMARY KEY (id)';
         $schema['data'] = 'datetime NOT NULL';
-        // $schema['excluded'] = 'tinyint NOT NULL';
+        $schema['keys']['primary'] = 'PRIMARY KEY (id)';
+        $schema['keys']['pages_id'] = 'UNIQUE (pages_id, sort)';
         $schema['keys']['data'] = 'KEY data (data)';
+        // $schema['excluded'] = 'tinyint NOT NULL';
         return $schema;
     }
 
@@ -459,11 +460,82 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     {
         return $field->getTable() . self::EXTRAS_TABLE_NAME_SUFFIX;
     }
+    
+    public function isEmptyValue(Field $field, $value) {
+        bd($value);
+        if($field) {}
+        return empty($value);
+    }
+    
+    /**
+     * Sanitize a value assumed to be either a timestamp or in strtotime() compatible format
+     *
+     * @param string|int|\DateTime
+     * @return int|string Returns unix timestamp integer or blank string if empty or invalid value
+     *
+     */
+    protected function _sanitizeValue($value) {
+        if(empty($value)) {
+            // empty value
+            $value = '';
+        } else if(is_int($value)) {
+            // value okay as-is
+        } else if($value instanceof \DateTime) {
+            // instance of DateTime
+            $value = $value->getTimestamp();
+        } else if(ctype_digit(ltrim("$value", '-'))) {
+            // already a timestamp
+            $value = (int) $value;
+        } else {
+            // convert date string to time
+            $value = strtotime($value);
+            if($value === false) $value = '';
+        }
+        return $value;
+    }
+    
+    public function getMatchQuery($query, $table, $subfield, $operator, $value) {
 
-    public function getMatchQuery($query, $table, $subfield, $operator, $value)
-    {
-        $value = wireDatetime('Y-m-d H:i:s ', $value);
-        return parent::getMatchQuery($query, $table, $subfield, $operator, $value);
+        if($subfield === 'count') {
+            return parent::getMatchQuery($query, $table, $subfield, $value);
+        }
+
+        // limit to operators: =, !=, >, >=, <, <= (exclude things like %=, *=, etc.)
+        if(!$this->wire()->database->isOperator($operator)) {
+            throw new WireException('You can only use DB-native operators here');
+        }
+
+        if(empty($value)) {
+            // empty value, which we'll let FieldtypeMulti handle
+            if(in_array($operator, [ '=', '<', '<=' ])) {
+                // match non-presence of rows
+                return parent::getMatchQuery($query, $table, 'count', '=', 0);
+            } else {
+                // match presence of rows
+                return parent::getMatchQuery($query, $table, 'count', '>', 0);
+            }
+        }
+
+        // convert value to ISO-8601 and create the WHERE condition
+        if(!ctype_digit("$value")) $value = strtotime($value);
+        $value = date('Y-m-d H:i:s', (int) $value);
+        $query->where("$table.data{$operator}?", $value);
+
+        return $query;
+    }
+    
+    /**
+     * Get selector info
+     *
+     * @param Field $field
+     * @param array $data
+     * @return array
+     *
+     */
+    public function ___getSelectorInfo(Field $field, array $data = array()) {
+        $a = parent::___getSelectorInfo($field, $data);
+        $a['operators'] = array('=', '!=', '>', '>=', '<', '<=', '%=', '^=', '=""', '!=""');
+        return $a;
     }
 
 }
