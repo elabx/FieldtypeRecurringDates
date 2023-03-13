@@ -451,12 +451,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         return $field->getTable() . self::EXTRAS_TABLE_NAME_SUFFIX;
     }
     
-    public function isEmptyValue(Field $field, $value) {
-        bd($value);
-        if($field) {}
-        return empty($value);
-    }
-    
     /**
      * Sanitize a value assumed to be either a timestamp or in strtotime() compatible format
      *
@@ -483,11 +477,21 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         }
         return $value;
     }
+
+    /*
+     * TODO Implement properly.
+     * Known issue is blank value on selector throws an error. Normal date
+     * fields don't do this, so predictable behaviour like existing fields is desired
+     */
+    public function isEmptyValue(Field $field, $value) {
+       return true;
+    }
+    
     
     public function getMatchQuery($query, $table, $subfield, $operator, $value) {
 
         if($subfield === 'count') {
-            return parent::getMatchQuery($query, $table, $subfield, $value);
+            return parent::getMatchQuery($query, $table, $subfield, $operator ,$value);
         }
 
         // limit to operators: =, !=, >, >=, <, <= (exclude things like %=, *=, etc.)
