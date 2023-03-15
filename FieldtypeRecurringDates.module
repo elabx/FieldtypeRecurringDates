@@ -25,7 +25,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     public function __construct()
     {
         $this->set('usePagination', true);
-        $this->set('useOrderByCols', true);
+        $this->set('useOrderByCols', false);
         require_once(__DIR__ . '/RecurringDateSettings.php');
         require_once(__DIR__ . '/RecurringDate.php');
         require_once(__DIR__ . '/Occurrence.php');
@@ -35,14 +35,12 @@ class FieldtypeRecurringDates extends FieldtypeMulti
 
     public function init(){
         $this->addHook('/fieldtype-recurring-dates/get-dates/', $this, 'hookGetDates');
+        $this->addHookAfter('Fields::added', $this, 'hookAfterFieldAdded');
+        $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
     }
 
     public function ready()
     {
-
-        $this->addHookAfter('Fields::added', $this, 'hookAfterFieldAdded');
-        $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
-        $this->addHookAfter('Fields::deleted', $this, 'hookAfterFieldDeleted');
         $this->addHookBefore('Pages::deleted', $this, 'hookAfterPageDelete');
     }
 
@@ -74,6 +72,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
      */
     public function hookAfterFieldAdded($event)
     {
+        bd($event);
         $item = $event->arguments(0);
         if ($item->type->name == $this->name) {
             $table_name = $this->getExtrasTableName($item);
