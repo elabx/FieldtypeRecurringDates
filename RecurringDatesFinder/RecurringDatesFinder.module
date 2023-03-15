@@ -42,7 +42,7 @@ class RecurringDatesFinder extends WireData implements Module
 
         if ($selector) {
             $selector .= ", $recurring_fields>=$start, $recurring_fields<=$end";
-            $selected_pages = $this->pages->findRaw($selector, 'title');
+            $selected_pages = $this->pages->find($selector, 'title');
         }
         if (!count($selected_pages)) return $field_queries;
         $selected_pages = array_keys($selected_pages);
@@ -99,9 +99,12 @@ class RecurringDatesFinder extends WireData implements Module
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
-            return $pdo->fetchAll(\PDO::FETCH_ASSOC);
+            $results = $pdo->fetchAll(\PDO::FETCH_ASSOC);
+            return $results;
         } elseif($field_queries->count == 1) {
-            $pdo = $this->database->prepare($field_queries->first());
+            $query = $field_queries->first();
+            $query .= "ORDER BY date ASC";
+            $pdo = $this->database->prepare($query);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
