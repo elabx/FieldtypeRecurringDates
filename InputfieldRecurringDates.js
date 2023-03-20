@@ -55,7 +55,7 @@ document.addEventListener('alpine:init', (e) => {
                     {name: 'Wednesday', value: 'WE'},
                     {name: 'Thursday', value: 'TH'},
                     {name: 'Friday', value: 'FR'},
-                    {name: 'Saturday', value: 'SAT'},
+                    {name: 'Saturday', value: 'SA'},
                 ],
             },
             data: {
