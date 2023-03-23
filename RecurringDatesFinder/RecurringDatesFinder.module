@@ -96,8 +96,11 @@ class RecurringDatesFinder extends WireData implements Module
             });
             $union_query .= "ORDER BY date ASC";
             $pdo = $this->database->prepare($union_query);
+            $start = $this->datetime->date('Y-m-d H:i:s', $start);
+            $end = $this->datetime->date('Y-m-d H:i:s', $end);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
+
             $pdo->execute();
             $results = $pdo->fetchAll(\PDO::FETCH_ASSOC);
             return $results;
@@ -105,6 +108,8 @@ class RecurringDatesFinder extends WireData implements Module
             $query = $field_queries->first();
             $query .= "ORDER BY date ASC";
             $pdo = $this->database->prepare($query);
+            $start = $this->datetime->date('Y-m-d H:i:s', $start);
+            $end = $this->datetime->date('Y-m-d H:i:s', $end);
             $pdo->bindValue(':start', $start);
             $pdo->bindValue(':end', $end);
             $pdo->execute();
