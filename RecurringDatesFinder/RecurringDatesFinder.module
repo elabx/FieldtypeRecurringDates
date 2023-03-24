@@ -42,7 +42,7 @@ class RecurringDatesFinder extends WireData implements Module
 
         if ($selector) {
             $selector .= ", $recurring_fields>=$start, $recurring_fields<=$end";
-            $selected_pages = $this->pages->find($selector, 'title');
+            $selected_pages = $this->pages->findRaw($selector, 'title');
         }
         if (!count($selected_pages)) return $field_queries;
         $selected_pages = array_keys($selected_pages);
