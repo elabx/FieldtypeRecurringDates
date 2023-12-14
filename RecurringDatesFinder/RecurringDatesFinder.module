@@ -106,7 +106,7 @@ class RecurringDatesFinder extends WireData implements Module
             return $results;
         } elseif($field_queries->count == 1) {
             $query = $field_queries->first();
-            $query .= "ORDER BY date ASC";
+            $query .= "ORDER BY date ASC, start_time ASC";
             $pdo = $this->database->prepare($query);
             $start = $this->datetime->date('Y-m-d H:i:s', $start);
             $end = $this->datetime->date('Y-m-d H:i:s', $end);
