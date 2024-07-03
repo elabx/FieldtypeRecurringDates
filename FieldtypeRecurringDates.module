@@ -6,9 +6,6 @@ use RRule\RRule;
 class FieldtypeRecurringDates extends FieldtypeMulti
 {
 
-
-
-
     const defaultLimit = 10;
     const EXTRAS_TABLE_NAME_SUFFIX = '_extras';
     const EXTRAS_TABLE_COLS = [
@@ -60,7 +57,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $field_name = $event->fields->get($field)->name;
         $page = $event->pages->get($page);
         $value = $page->$field_name("start=$start, limit=$limit, sort=data");
-        bd($value->occurrences);
+
         return $value->occurrences;
     }
 
@@ -72,7 +69,6 @@ class FieldtypeRecurringDates extends FieldtypeMulti
      */
     public function hookAfterFieldAdded($event)
     {
-        bd($event);
         $item = $event->arguments(0);
         if ($item->type->name == $this->name) {
             $table_name = $this->getExtrasTableName($item);
@@ -154,9 +150,8 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
         $schema['data'] = 'datetime NOT NULL';
         $schema['keys']['primary'] = 'PRIMARY KEY (id)';
-        $schema['keys']['pages_id'] = 'UNIQUE (pages_id, sort)';
+        $schema['keys']['pages_id_sort_data'] = 'UNIQUE (pages_id, sort, data)';
         $schema['keys']['data'] = 'KEY data (data)';
-        // $schema['excluded'] = 'tinyint NOT NULL';
         return $schema;
     }
 
@@ -279,6 +274,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
             $this->saveSettings($page, $field, $value);
             foreach ($value->rrule as $date) {
                 $occurrence_date = new Occurrence();
+                // TODO
                 // $occurrence_date->excluded = false;
                 $occurrence_date->date = $date;
                 $value->occurrences->add($occurrence_date);
@@ -529,6 +525,17 @@ class FieldtypeRecurringDates extends FieldtypeMulti
         $a = parent::___getSelectorInfo($field, $data);
         $a['operators'] = array('=', '!=', '>', '>=', '<', '<=', '%=', '^=', '=""', '!=""');
         return $a;
+    }
+
+    public function ___upgrade($fromVersion, $toVersion){
+        if($fromVersion == "0.0.1-alpha4" && $toVersion == "0.0.1"){
+            foreach($this->fields->find("type={$this->name}") as $field){
+                $table = $field->getTable();
+                $update_schema = "ALTER TABLE `{$table}`ADD UNIQUE `pages_id_sort_data` (`pages_id`, `sort`, `data`), DROP INDEX `pages_id`";
+                $pdo = $this->database->prepare($update_schema);
+                $pdo->execute();
+            }
+        }
     }
 
 }

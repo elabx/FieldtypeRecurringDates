@@ -1,6 +1,6 @@
 {
   "title": "Recurring Dates",
-  "version": "0.0.1-alpha4",
+  "version": "0.0.1",
   "summary": "Field that stores recurring events from RRule input.",
   "icon": "calendar-o",
   "installs": "InputfieldRecurringDates",
