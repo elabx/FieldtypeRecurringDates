@@ -271,15 +271,21 @@ class FieldtypeRecurringDates extends FieldtypeMulti
     {
         $sleepValue = array();
         if ($value->rrule) {
-            $this->saveSettings($page, $field, $value);
-            foreach ($value->rrule as $date) {
-                $occurrence_date = new Occurrence();
-                // TODO
-                // $occurrence_date->excluded = false;
-                $occurrence_date->date = $date;
-                $value->occurrences->add($occurrence_date);
+
+            if ($value->occurrences->count() == 0) {
+                $this->saveSettings($page, $field, $value);
+                foreach ($value->rrule as $date) {
+                    $occurrence_date = new Occurrence();
+                    // TODO
+                    // $occurrence_date->excluded = false;
+                    $occurrence_date->date = $date;
+                    $value->occurrences->add($occurrence_date);
+                }
             }
+
+            $this->saveSettings($page, $field, $value);
         }
+
         if (!$value instanceof RecurringDate) return $sleepValue;
         
         foreach ($value->occurrences as $occurrence) {
