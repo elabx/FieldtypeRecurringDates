@@ -424,7 +424,7 @@ class FieldtypeRecurringDates extends FieldtypeMulti
      * @param Field $field
      * @return void
      */
-    protected function deleteSettings(Page $page, Field $field)
+    protected static function deleteSettings(Page $page, Field $field)
     {
         $sql = "DELETE FROM {$this->getExtrasTableName($field)} WHERE pages_id = :id";
         /** @var \PDOStatement $pdo */

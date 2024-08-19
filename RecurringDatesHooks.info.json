@@ -1,0 +1,8 @@
+{
+  "title": "Recurring Dates Hooks",
+  "version": "0.0.1",
+  "summary": "Additional hook to delete settings table in row, autoloaded for convenience.",
+  "icon": "calendar-o",
+  "requires": "FieldtypeRecurringDates",
+  "autoload": 1
+}
