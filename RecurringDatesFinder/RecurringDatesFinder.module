@@ -64,7 +64,7 @@ class RecurringDatesFinder extends WireData implements Module
                 $where[] = "data >= :start";
             }
             if ($end) {
-                $where[] = "data <= :end";
+                $where[] = "data < :end";
             }
             $where = implode(" AND ", $where);
             $query .= "WHERE $where";
