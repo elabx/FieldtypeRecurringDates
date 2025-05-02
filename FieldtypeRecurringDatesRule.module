@@ -1,0 +1,213 @@
+<?php namespace ProcessWire;
+
+use RRule\RRule;
+
+
+class FieldtypeRecurringDatesRule extends Fieldtype
+{
+
+    const defaultLimit = 10;
+    const EXTRAS_TABLE_NAME_SUFFIX = '_extras';
+    const EXTRAS_TABLE_COLS = [
+      'pages_id',
+      'rrule',
+      'settings'
+    ];
+
+    /**
+     * Construct the Fieldtype, make sure all dependencies are in place
+     *
+     */
+
+    public function __construct()
+    {
+        require_once(__DIR__ . '/RecurringDateSettings.php');
+        require_once(__DIR__ . '/RecurringDate.php');
+        require_once(__DIR__ . '/Occurrence.php');
+        require_once(__DIR__ . '/OccurrenceArray.php');
+        parent::__construct();
+    }
+
+    public function init(){}
+
+    public function ready(){}
+
+
+    public function getRruleOcurrences($value)
+    {
+        $rrule = new RRule($value);
+        return $rrule;
+    }
+
+    /**
+     * Return the database schema that defines an Occurrence
+     *
+     * @param Field $field
+     * @return array
+     *
+     */
+    public function getDatabaseSchema(Field $field)
+    {
+        $schema = parent::getDatabaseSchema($field);
+        $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
+        $schema['data'] = 'datetime NOT NULL';
+        $schema['keys']['primary'] = 'PRIMARY KEY (id)';
+        $schema['keys']['pages_id_sort_data'] = 'UNIQUE (pages_id, sort, data)';
+        $schema['keys']['data'] = 'KEY data (data)';
+        return $schema;
+    }
+
+    /**
+     * Return the Inputfield used to collect input for a field of this type
+     *
+     * @param Page $page
+     * @param Field $field
+     * @return Inputfield|InputfieldRecurringDates
+     *
+     */
+    public function getInputfield(Page $page, Field $field)
+    {
+        $inputfield = $this->modules->get('InputfieldRecurringDates');
+        /** @var InputfieldRecurringDates $inputfield */
+        return $inputfield;
+    }
+
+    /**
+     * Return a blank ready-to-populate value
+     *
+     * @param Page $page
+     * @param Field $field
+     * @return RecurringDate
+     *
+     */
+    public function getBlankValue(Page $page, Field $field)
+    {
+        return new RecurringDate();
+    }
+
+    /**
+     * Given a value, make it clean and of the correct type for storage within a Page
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param EventArray $value
+     * @return mixed
+     *
+     */
+    public function sanitizeValue(Page $page, Field $field, $value)
+    {
+        // if given an invalid value, return a valid blank value
+        return $value;
+    }
+
+    protected function isSettingsValue($value)
+    {
+        $count = 0;
+        $keys = self::EXTRAS_TABLE_COLS;
+        foreach ($keys as $key) {
+            if (isset($value[$key]) || array_key_exists($key, $value)) {
+                $count++;
+            }
+        }
+
+        if ($count == 3) {
+            return true;
+        } else {
+            return false;
+        }
+        //if(array_key_exists(''))
+    }
+
+    public function ___wakeupValue(Page $page, Field $field, $value)
+    {
+        $recurring_date = $this->getBlankValue($page, $field);
+        $recurring_date->rrule = new RRule($value);
+        return $recurring_date;
+    }
+
+    /**
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param array $value
+     * @return array
+     *
+     */
+
+
+    /**
+     * Render a markup string of the value (optional for Fieldtypes to implement)
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param EventArray $value
+     * @param string $property Property to render or omit for all
+     * @return string|MarkupFieldtype
+     *
+     */
+
+    public function ___markupValue(Page $page, Field $field, $value = null, $property = '')
+    {
+        return $value;
+    }
+
+    public function getMonths()
+    {
+        $months = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $months[] = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+        }
+        return $months;
+    }
+
+    public function getLoadQuery(Field $field, DatabaseQuerySelect $query)
+    {
+        if ($this->wire()->process instanceof WirePageEditor) {
+            $query = parent::getLoadQuery($field, $query);
+            $query->set('select', []);
+            foreach (self::EXTRAS_TABLE_COLS as $col) {
+                $selects[] = "{$this->getExtrasTableName($field)}.{$col} AS `{$field->name}__{$col}`";
+            }
+            $query->remove('orderby');
+            foreach ($selects as $s) {
+                $query->select($s);
+            }
+            return $query;
+        } else {
+            return parent::getLoadQuery($field, $query);
+        }
+    }
+
+
+    /*
+     * TODO Implement properly.
+     * Known issue is blank value on selector throws an error. Normal date
+     * fields don't do this, so predictable behaviour like existing fields is desired
+     */
+    public function isEmptyValue(Field $field, $value) {
+       return true;
+    }
+    
+    
+    public function getMatchQuery($query, $table, $subfield, $operator, $value) {
+
+
+
+        return $query;
+    }
+    
+    /**
+     * Get selector info
+     *
+     * @param Field $field
+     * @param array $data
+     * @return array
+     *
+     */
+    public function ___getSelectorInfo(Field $field, array $data = array()) {
+        $a = parent::___getSelectorInfo($field, $data);
+        $a['operators'] = array('=', '!=', '>', '>=', '<', '<=', '%=', '^=', '=""', '!=""');
+        return $a;
+    }
+
+}
