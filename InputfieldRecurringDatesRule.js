@@ -1,4 +1,4 @@
-function initInputfieldRecurringDates(root) {
+function initInputfieldRecurringDatesRule(root) {
     if (root === undefined) {
         root = document;
     }
@@ -15,7 +15,7 @@ function initInputfieldRecurringDates(root) {
 }
 
 jQuery(document).ready(function () {
-    initInputfieldRecurringDates();
+    initInputfieldRecurringDatesRule();
 });
 
 jQuery(document).on('reloaded', '.InputfieldRepeaterItem', function (event) {
@@ -24,7 +24,7 @@ jQuery(document).on('reloaded', '.InputfieldRepeaterItem', function (event) {
 });
 
 document.addEventListener('alpine:init', (e) => {
-    Alpine.data('recurringDatesInput', function () {
+    Alpine.data('recurringDatesRuleInput', function () {
         return {
             inputfield: '',
             _rrule: null,
@@ -86,6 +86,7 @@ document.addEventListener('alpine:init', (e) => {
 
                 this.$watch('settings', (prop, oldValue) => {
                     this._settings = JSON.stringify(this.settings);
+                    //console.log(this.settings);
                     var self = this;
                     self.catalogues.filters.forEach(function (filter) {
 
@@ -117,7 +118,7 @@ document.addEventListener('alpine:init', (e) => {
 
 
             updateEventList: function () {
-                var url = new URL('fieldtype-recurring-dates/get-dates/', window.origin);
+                var url = new URL('fieldtype-recurring-dates-rule/get-dates/', window.origin);
                 var params = {
                     id: this.pageId,
                     field_id: this.fieldId,
@@ -198,12 +199,18 @@ document.addEventListener('alpine:init', (e) => {
                 }
                 if (this.settings.limit_mode === "never") {
                     delete rrule_copy.UNTIL
-                    rrule_copy.COUNT = this.hard_limit;
+                    delete rrule_copy.COUNT
+                    //rrule_copy.COUNT = this.hard_limit;
                 }
-                var json_string = JSON.stringify(rrule_copy);
-                if (this.$refs['pre-debug'] !== undefined) {
+                //console.log(rrule_copy);
+                this.save_value = {
+                    rrule: rrule_copy,
+                    settings: this.settings
+                }
+                var json_string = JSON.stringify(this.save_value);
+                /* if (this.$refs['pre-debug'] !== undefined) {
                     this.$refs['pre-debug'].innerText = JSON.stringify(rrule_copy, null, 2);
-                }
+                } */
                 this._rrule = json_string;
             }
         }

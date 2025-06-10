@@ -1,18 +1,15 @@
 <?php namespace ProcessWire;
 
+use DateTime;
 use RRule\RRule;
+use ProcessWire\Field;
+use ProcessWire\Page;
+use ProcessWire\DatabaseQuerySelect;
+use ProcessWire\FieldtypeTextarea;
 
 
-class FieldtypeRecurringDatesRule extends Fieldtype
+class FieldtypeRecurringDatesRule extends FieldtypeTextarea
 {
-
-    const defaultLimit = 10;
-    const EXTRAS_TABLE_NAME_SUFFIX = '_extras';
-    const EXTRAS_TABLE_COLS = [
-      'pages_id',
-      'rrule',
-      'settings'
-    ];
 
     /**
      * Construct the Fieldtype, make sure all dependencies are in place
@@ -21,22 +18,33 @@ class FieldtypeRecurringDatesRule extends Fieldtype
 
     public function __construct()
     {
-        require_once(__DIR__ . '/RecurringDateSettings.php');
-        require_once(__DIR__ . '/RecurringDate.php');
-        require_once(__DIR__ . '/Occurrence.php');
-        require_once(__DIR__ . '/OccurrenceArray.php');
+       
+        require_once(__DIR__ . '/RecurringDateRule.php');
+        require_once(__DIR__ . '/RecurringDateRuleSettings.php');
         parent::__construct();
     }
 
-    public function init(){}
+    public function init(){
+        $this->addHook('/fieldtype-recurring-dates-rule/get-dates/', $this, 'hookGetDates');
 
-    public function ready(){}
+    }
+
+    public function ready(){
+    }
 
 
     public function getRruleOcurrences($value)
     {
         $rrule = new RRule($value);
         return $rrule;
+    }
+
+    public function hookGetDates($event)
+    {
+        $input = $event->input;
+        $page = $input->get->int('id');
+        $field = $input->get->int('field_id');
+        return [];
     }
 
     /**
@@ -49,11 +57,7 @@ class FieldtypeRecurringDatesRule extends Fieldtype
     public function getDatabaseSchema(Field $field)
     {
         $schema = parent::getDatabaseSchema($field);
-        $schema['id'] = 'INT UNSIGNED NOT NULL AUTO_INCREMENT';
-        $schema['data'] = 'datetime NOT NULL';
-        $schema['keys']['primary'] = 'PRIMARY KEY (id)';
-        $schema['keys']['pages_id_sort_data'] = 'UNIQUE (pages_id, sort, data)';
-        $schema['keys']['data'] = 'KEY data (data)';
+        $schema['data'] = 'JSON NULL';
         return $schema;
     }
 
@@ -67,7 +71,7 @@ class FieldtypeRecurringDatesRule extends Fieldtype
      */
     public function getInputfield(Page $page, Field $field)
     {
-        $inputfield = $this->modules->get('InputfieldRecurringDates');
+        $inputfield = $this->modules->get('InputfieldRecurringDatesRule');
         /** @var InputfieldRecurringDates $inputfield */
         return $inputfield;
     }
@@ -82,7 +86,7 @@ class FieldtypeRecurringDatesRule extends Fieldtype
      */
     public function getBlankValue(Page $page, Field $field)
     {
-        return new RecurringDate();
+        return new RecurringDateRule();
     }
 
     /**
@@ -118,10 +122,22 @@ class FieldtypeRecurringDatesRule extends Fieldtype
         //if(array_key_exists(''))
     }
 
+    
+
     public function ___wakeupValue(Page $page, Field $field, $value)
     {
+        //bd($value);
+        
+        $value = json_decode($value, true);
+        
         $recurring_date = $this->getBlankValue($page, $field);
-        $recurring_date->rrule = new RRule($value);
+        $recurring_date->settings = $value['settings'];
+        //bd($recurring_date);
+        $rrule = new RRule($value['rrule']);
+
+        $recurring_date->set('rrule', $rrule);
+        //return null;
+        //bd($recurring_date);
         return $recurring_date;
     }
 
@@ -162,22 +178,9 @@ class FieldtypeRecurringDatesRule extends Fieldtype
 
     public function getLoadQuery(Field $field, DatabaseQuerySelect $query)
     {
-        if ($this->wire()->process instanceof WirePageEditor) {
-            $query = parent::getLoadQuery($field, $query);
-            $query->set('select', []);
-            foreach (self::EXTRAS_TABLE_COLS as $col) {
-                $selects[] = "{$this->getExtrasTableName($field)}.{$col} AS `{$field->name}__{$col}`";
-            }
-            $query->remove('orderby');
-            foreach ($selects as $s) {
-                $query->select($s);
-            }
-            return $query;
-        } else {
-            return parent::getLoadQuery($field, $query);
-        }
-    }
 
+        return parent::getLoadQuery($field, $query);
+    }
 
     /*
      * TODO Implement properly.
@@ -188,14 +191,8 @@ class FieldtypeRecurringDatesRule extends Fieldtype
        return true;
     }
     
-    
-    public function getMatchQuery($query, $table, $subfield, $operator, $value) {
 
 
-
-        return $query;
-    }
-    
     /**
      * Get selector info
      *
