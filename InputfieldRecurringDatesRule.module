@@ -95,7 +95,21 @@ class InputfieldRecurringDatesRule extends Inputfield
 
     public function ___processInput(WireInputData $input)
     {
-        parent::___processInput($input);
+        $name = $this->attr('name');
+        $recurring_date_obj = new RecurringDateRule();
+        $value = json_decode($input[$name], true);
+        $settings = json_decode($input[$name . "_settings"], true);
+        try{    
+            $recurring_date_obj->rrule = new RRule($value['rrule']);
+            //bd($recurring_date_obj->rrule);
+            $recurring_date_obj->settings = new RecurringDateRuleSettings($settings);
+        }catch(\Exception $e){
+            throw new WireException("Invalid RRule: " . $e->getMessage());
+        }
+    
+        $this->val($recurring_date_obj);
+        $this->trackChange('value');
+        return $this;
 
     }
 

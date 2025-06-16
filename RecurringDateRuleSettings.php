@@ -2,20 +2,24 @@
 
 class RecurringDateRuleSettings extends WireData
 {
-    public $limit_mode;
-    public $rrule;
-    public $filters;
-    public function __construct()
+    public $limit_mode = "";
+    public $rrule = "";
+    public $filters = [];
+    public function __construct($data = null)
     {
-        $this->limit_mode = "";
-        $this->rrule = "";
-        $this->filters = [];
-        parent::__construct();
-    }
+        //parent::__construct();
 
-    public function set($key, $value)
-    {
-        return parent::set($key, $value);
+        if (is_array($data)) {
+            if (array_key_exists('limit_mode', $data)) {
+                $this->limit_mode = $data['limit_mode'];
+            }
+            if (array_key_exists('rrule', $data)) {
+                $this->rrule = $data['rrule'];
+            }
+            if (array_key_exists('filters', $data)) {
+                $this->filters = $data['filters'];
+            }
+        }
     }
 
     public function __toString()

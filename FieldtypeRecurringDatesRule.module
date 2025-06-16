@@ -123,21 +123,60 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
     }
 
     
+    
+
+    /**
+     * Prepare a value for storage in the database
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param mixed $value
+     * @return string
+     *
+     */
+    public function ___sleepValue(Page $page, Field $field, $value)
+    {
+        bd($value);   
+        if (!$value instanceof RecurringDateRule) {
+            return json_encode(null);
+        }
+        //bd((string) $value);
+        $rrule = $value->get('rrule');
+
+        $rruleData = null;
+        if ($rrule instanceof RRule) {
+            $rruleData = $rrule->getRule();
+        }
+        
+        $data = array(
+            'rrule' => $rruleData,
+            'settings' => $value->settings
+        );
+        //bd($data);
+
+        return json_encode($data);
+    }
 
     public function ___wakeupValue(Page $page, Field $field, $value)
     {
-        //bd($value);
+        bd($value);
         
         $value = json_decode($value, true);
-        
+
         $recurring_date = $this->getBlankValue($page, $field);
+        
+        if (empty($value)) {
+            return $recurring_date;
+        }
+
         $recurring_date->settings = $value['settings'];
         //bd($recurring_date);
-        $rrule = new RRule($value['rrule']);
-
-        $recurring_date->set('rrule', $rrule);
+        if (!empty($value['rrule'])) {
+            $rrule = new RRule($value['rrule']);
+            $recurring_date->set('rrule', $rrule);
+        }
         //return null;
-        //bd($recurring_date);
+        bd($recurring_date);
         return $recurring_date;
     }
 

@@ -23,4 +23,13 @@ class RecurringDateRule extends WireData
     public function getRule(){
         return $this->rrule;
     }
+
+    public function __toString(){
+        $value = [
+            'settings' => $this->settings,
+            'rrule' => $this->getRule()
+        ];
+        //bd(string($value));
+        return json_encode($value);
+    }
 }
