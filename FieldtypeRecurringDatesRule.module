@@ -136,7 +136,7 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
      */
     public function ___sleepValue(Page $page, Field $field, $value)
     {
-        bd($value);   
+
         if (!$value instanceof RecurringDateRule) {
             return json_encode(null);
         }
@@ -159,7 +159,7 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
 
     public function ___wakeupValue(Page $page, Field $field, $value)
     {
-        bd($value);
+
         
         $value = json_decode($value, true);
 
@@ -176,7 +176,7 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
             $recurring_date->set('rrule', $rrule);
         }
         //return null;
-        bd($recurring_date);
+        //bd($recurring_date);
         return $recurring_date;
     }
 
