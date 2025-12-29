@@ -20,7 +20,7 @@ jQuery(document).ready(function () {
 
 jQuery(document).on('reloaded', '.InputfieldRepeaterItem', function (event) {
     var inputfield = event.currentTarget;
-    initInputfieldRecurringDates(inputfield);
+    initInputfieldRecurringDatesRule(inputfield);
 });
 
 document.addEventListener('alpine:init', (e) => {
