@@ -100,8 +100,13 @@ document.addEventListener('alpine:init', (e) => {
                     this.saveString();
                 });
 
-                var json_rrule = this.$refs['main-input'].dataset.rrule;
-                var widget_settings = this.$refs['main-input'].dataset.settings;
+                var mainInput = this.$refs['main-input'];
+                if (!mainInput) {
+                    mainInput = this.$el.querySelector('[x-ref="main-input"]');
+                }
+
+                var json_rrule = mainInput ? mainInput.dataset.rrule : null;
+                var widget_settings = mainInput ? mainInput.dataset.settings : null;
 
                 if (widget_settings) {
                     this.settings = JSON.parse(widget_settings);
