@@ -1,27 +1,3 @@
-function initInputfieldRecurringDatesRule(root) {
-    if (root === undefined) {
-        root = document;
-    }
-    let components = root.querySelectorAll("[defer-x-data]");
-    components.forEach(function (component) {
-        // https://github.com/alpinejs/alpine/issues/359#issuecomment-973688464
-        let alpineComponent = component.getAttribute('defer-x-data');
-        Alpine.mutateDom(function () {
-            component.setAttribute('x-data', alpineComponent);
-        })
-        Alpine.initTree(component);
-        component.removeAttribute('defer-x-data');
-    });
-}
-
-jQuery(document).ready(function () {
-    initInputfieldRecurringDatesRule();
-});
-
-jQuery(document).on('reloaded', '.InputfieldRepeaterItem', function (event) {
-    var inputfield = event.currentTarget;
-    initInputfieldRecurringDatesRule(inputfield);
-});
 
 document.addEventListener('alpine:init', (e) => {
     Alpine.data('recurringDatesRuleInput', function () {
@@ -103,9 +79,9 @@ document.addEventListener('alpine:init', (e) => {
                     this.saveString();
                 });
 
-                var json_rrule = this.$refs['main-input'].dataset.rrule;
-                var widget_settings = this.$refs['main-input'].dataset.settings;
-
+                var mainInput = this.$el.querySelector("[data-main-input]");
+                var json_rrule = mainInput ? mainInput.dataset.rrule : null;
+                var widget_settings = mainInput ? mainInput.dataset.settings : null;
                 // Always initialize settings - use parsed value if provided, otherwise use defaults
                 if (widget_settings) {
                     this.settings = JSON.parse(widget_settings);

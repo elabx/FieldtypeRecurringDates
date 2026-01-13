@@ -7,7 +7,7 @@
 <div data-page-id="<?= $inputfield->hasPage->id ?>"
      data-field-id="<?= $inputfield->hasField->id ?>"
      data-inputfield-name="<?= $inputfield->name ?>"
-     defer-x-data="recurringDatesRuleInput">
+     x-data="recurringDatesRuleInput">
     <input <?= $inputfield->getAttributesString() ?>>
     <input x-model="_settings" type="hidden" name="<?= $inputfield->name ?>_settings">
     <?php
@@ -27,7 +27,7 @@
                         <div class="uk-grid" uk-grid>
                             <div>
                                 <label class="uk-form-label">Starts on:</label>
-                                <input x-ref="dtstart-datetime-input"
+                                <input 
                                        type="<?= $inputfield->getDateStartInputType() ?>"
                                        x-model="rrule.DTSTART"
                                        class="uk-input" value="">

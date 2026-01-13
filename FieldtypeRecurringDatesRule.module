@@ -25,6 +25,8 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
     }
 
     public function init(){
+        $this->config->scripts->add($this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.js');
+        $this->config->styles->add($this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.css');
         $this->addHook('/fieldtype-recurring-dates-rule/get-dates/', $this, 'hookGetDates');
 
     }

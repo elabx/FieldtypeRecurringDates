@@ -67,7 +67,8 @@ class InputfieldRecurringDatesRule extends Inputfield
         if ($rule_json) {
             $this->setAttribute('value', [$rule_json]);
         }
-        $this->setAttribute('x-ref', 'main-input');
+        //$this->setAttribute('x-ref', 'main-input');
+        $this->setAttribute('data-main-input', 'true');
         $this->setAttribute('x-model', '_rrule');
         $this->setAttribute('data-rrule', $rule_json);
         $this->setAttribute('type', 'hidden');
