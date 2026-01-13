@@ -15,7 +15,7 @@ class InputfieldRecurringDatesRule extends Inputfield
     {
         return array(
           'title' => 'Recurring Dates Rule',
-          'version' => 001,
+          'version' => 002,
           'summary' => 'Field that lets you define a recurring date rule.',
           'icon' => 'calendar-o',
           'requires' => 'AlpineJS'
