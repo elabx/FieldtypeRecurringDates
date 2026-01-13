@@ -85,18 +85,20 @@ document.addEventListener('alpine:init', (e) => {
                 });
 
                 this.$watch('settings', (prop, oldValue) => {
+                    if (!this.settings) return; // Don't process if settings is null
                     this._settings = JSON.stringify(this.settings);
                     //console.log(this.settings);
                     var self = this;
-                    self.catalogues.filters.forEach(function (filter) {
-
-                        var found = self.settings.filters.find(filter_setting => filter_setting === filter.value);
-                        if (found === undefined) {
-                            if (self.rrule[filter.value] !== undefined) {
-                                self.rrule[filter.value] = [];
+                    if (self.settings.filters) {
+                        self.catalogues.filters.forEach(function (filter) {
+                            var found = self.settings.filters.find(filter_setting => filter_setting === filter.value);
+                            if (found === undefined) {
+                                if (self.rrule[filter.value] !== undefined) {
+                                    self.rrule[filter.value] = [];
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
 
                     this.saveString();
                 });
@@ -104,15 +106,20 @@ document.addEventListener('alpine:init', (e) => {
                 var json_rrule = this.$refs['main-input'].dataset.rrule;
                 var widget_settings = this.$refs['main-input'].dataset.settings;
 
+                // Always initialize settings - use parsed value if provided, otherwise use defaults
                 if (widget_settings) {
                     this.settings = JSON.parse(widget_settings);
+                } else {
+                    // Initialize with default settings when empty - needed for form input
+                    this.settings = {
+                        limit_mode: "",
+                        rrule: "",
+                        filters: []
+                    };
                 }
+                
                 if (json_rrule) {
                     this.rrule = JSON.parse(json_rrule);
-                    this._rrule = JSON.stringify(this.rrule);
-                } else {
-
-                    //this.settings.limit_mode = "count";
                 }
             },
 
@@ -190,6 +197,18 @@ document.addEventListener('alpine:init', (e) => {
             },
 
             saveString: function () {
+                // Don't save if settings is not initialized
+                if (!this.settings) {
+                    this._rrule = "";
+                    return;
+                }
+
+                // Check if we have a valid DTSTART - if not, send empty value
+                if (!this.rrule || !this.rrule.DTSTART || this.rrule.DTSTART === "") {
+                    this._rrule = "";
+                    return;
+                }
+
                 var rrule_copy = this.cloneObject(this.rrule);
                 if (this.settings.limit_mode === "count") {
                     delete rrule_copy.UNTIL
