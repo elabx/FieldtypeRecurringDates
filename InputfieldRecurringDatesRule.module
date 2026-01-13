@@ -93,6 +93,7 @@ class InputfieldRecurringDatesRule extends Inputfield
 
     }
 
+    
     public function ___processInput(WireInputData $input)
     {
         $name = $this->attr('name');
