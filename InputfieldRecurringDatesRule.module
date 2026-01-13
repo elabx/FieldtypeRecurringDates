@@ -36,13 +36,8 @@ class InputfieldRecurringDatesRule extends Inputfield
 
     public function ___render()
     {
-        /** @var RecurringDateRule $recurring_dates */
+        /** @var RecurringDate $recurring_dates */
         $recurring_dates = $this->value;
-        
-        // Handle empty/null value
-        if (!$recurring_dates) {
-            $recurring_dates = new RecurringDateRule();
-        }
         
         $this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
         //$occurrences = $recurring_dates->occurrences;
@@ -102,25 +97,8 @@ class InputfieldRecurringDatesRule extends Inputfield
     {
         $name = $this->attr('name');
         $recurring_date_obj = new RecurringDateRule();
-        $value = $input[$name];
-        
-        // Handle empty value
-        if ($value === "" || $value === null) {
-            $this->val($recurring_date_obj);
-            $this->trackChange('value');
-            return $this;
-        }
-        
-        $value = json_decode($value, true);
+        $value = json_decode($input[$name], true);
         $settings = json_decode($input[$name . "_settings"], true);
-        
-        // Handle empty or invalid JSON
-        if ($value === null || !isset($value['rrule']) || empty($value['rrule'])) {
-            $this->val($recurring_date_obj);
-            $this->trackChange('value');
-            return $this;
-        }
-        
         try{    
             $recurring_date_obj->rrule = new RRule($value['rrule']);
             //bd($recurring_date_obj->rrule);
