@@ -230,59 +230,9 @@
         </div>
     </div>
     <div class="uk-width-1-1@m uk-margin-auto uk-margin">
-        <div class="uk-box-shadow-small ">
-            <div class="uk-width-1-1 uk-padding-small">
-                <div class="uk-grid uk-flex-between" uk-grid>
-                    <div class="uk-width-1-1 uk-width-expand@m" x-on:click="show_table = !show_table">
-                        <i class="uk-margin-small-right" uk-icon="list">
-                            <?php /** @var $occurrences RecurringDate */ ?>
-                        </i>
-                        <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
-                    </div>
-
-
-                </div>
-            </div>
-
-            <div x-cloak x-show="show_table" class=" uk-width-1-1">
-                <hr class="uk-margin uk-margin-top">
-
-                <div class=" uk-padding-small">
-                    <table class="uk-table uk-table-small uk-table-divider" id="<?= $inputfield->name ?>_ocurrences"
-                           class="uk-table-small uk-table uk-table-striped">
-                        <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th>Day</th>
-                            <th>Year</th>
-                        </tr>
-                        </thead>
-                        <template x-for="date in data.dates">
-                            <tr>
-                                <td x-text="date.month"></td>
-                                <td x-text="date.day"></td>
-                                <td x-text="date.year"></td>
-                            </tr>
-                        </template>
-                    </table>
-                    <div class="uk-flex uk-flex-middle uk-flex-right">
-                        
-                        <ul class="uk-margin-small-left uk-margin-small uk-pagination" role="navigation"
-                            aria-label="Pagination links">
-                            <li aria-label="" class="" aria-current="true">
-                                <button @click="previousPage" type="button">
-                                    <span uk-icon="chevron-left"></span>
-                                </button>
-                            </li>
-                            <li aria-label="" class="">
-                                <button @click="nextPage" type="button">
-                                    <span uk-icon="chevron-right"></span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
+        <div class="">
+            <div class="uk-width-1-1 uk-text-meta">
+                <?= $inputfieldValue->rrule ? $inputfieldValue->rrule->humanReadable() : "" ?>
             </div>
         </div>
     </div>

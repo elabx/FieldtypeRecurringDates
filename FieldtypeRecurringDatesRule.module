@@ -31,8 +31,6 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
         ]);
         $this->config->scripts->add($urls[0]);
         $this->config->styles->add($urls[1]);
-        $this->addHook('/fieldtype-recurring-dates-rule/get-dates/', $this, 'hookGetDates');
-
     }
 
     public function ready(){
@@ -43,14 +41,6 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
     {
         $rrule = new RRule($value);
         return $rrule;
-    }
-
-    public function hookGetDates($event)
-    {
-        $input = $event->input;
-        $page = $input->get->int('id');
-        $field = $input->get->int('field_id');
-        return [];
     }
 
     /**

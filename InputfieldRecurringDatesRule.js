@@ -17,7 +17,6 @@ document.addEventListener('alpine:init', (e) => {
             _settings: null,
             settings: null,
             hard_limit: null,
-            show_table: false,
             catalogues: {
                 filters: [
                     {label: "Months", value: 'BYMONTH'},
@@ -34,27 +33,12 @@ document.addEventListener('alpine:init', (e) => {
                     {name: 'Saturday', value: 'SA'},
                 ],
             },
-            data: {
-                dates: [],
-                pagination: {
-                    start: 0,
-                    limit: null,
-                    total: null,
-                    sort: 'ascending',
-                    pagination_string: '',
-                    markup_pager: null,
-                }
-            },
 
             init: function () {
                 this.inputfield = this.$el.dataset.inputfieldName;
                 this.pageId = parseInt(this.$el.dataset.pageId);
                 this.fieldId = parseInt(this.$el.dataset.fieldId)
                 this.hard_limit = parseInt(this.$el.dataset.hardLimit)
-
-                this.data.pagination.limit = this.$el.dataset.inputfieldLimit;
-                this.updateEventList();
-
 
                 this.$watch('rrule', (prop) => {
                     this.saveString();
@@ -100,54 +84,11 @@ document.addEventListener('alpine:init', (e) => {
             },
 
 
-            updateEventList: function () {
-                var url = new URL('fieldtype-recurring-dates-rule/get-dates/', window.origin);
-                var params = {
-                    id: this.pageId,
-                    field_id: this.fieldId,
-                    limit: this.data.pagination.limit,
-                    start: this.data.pagination.start
-                }
-
-                url.search = new URLSearchParams(params).toString();
-
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) alert(`Something went wrong: ${response.status} - ${response.statusText}`)
-                        return response.json()
-                    })
-                    .then(response => {
-
-                        this.data = response;
-                    });
-            },
-
-            previousPage(){
-                this.data.pagination.start -= this.data.pagination.limit
-                this.updateEventList()
-            },
-            nextPage(){
-                this.data.pagination.start += this.data.pagination.limit
-                this.updateEventList()
-            },
-
             is_filtering: function (filter) {
                 if (this.rrule[filter] !== null || this.rrule[filter] !== undefined) {
                     if (this.rrule[filter].length) {
                         return true;
                     }
-                }
-            },
-
-            getToggleText(){
-                if(!this.show_table) {
-                    return "Show dates <span uk-icon='chevron-down'></span>";
-                }else{
-                    return "Hide dates <span uk-icon='chevron-up'></span>";
                 }
             },
 
