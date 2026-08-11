@@ -1,0 +1,216 @@
+<?php namespace ProcessWire;
+
+use RRule\RRule;
+
+/**
+ * FieldtypeEvents: InputfieldEvent
+ *
+ * Collects input for FieldtypeEvents fields. This accompanies the FieldtypeEvents as a demonstration
+ * of creating a multi-value Fieldtype and Inputfield.
+ *
+ */
+class InputfieldRecurringDatesRule extends Inputfield
+{
+    public static function getModuleInfo()
+    {
+        return array(
+          'title' => 'Recurring Dates Rule',
+          'version' => 3,
+          'summary' => 'Field that lets you define a recurring date rule.',
+          'icon' => 'calendar-o',
+          'requires' => 'AlpineJS'
+        );
+    }
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function init()
+    {
+        // Load Alpine.js in <header>
+        $this->set('startDateInput', 'date');
+        $this->set('weekStartsOn', 'MO');
+        $this->modules->AlpineJS;
+    }
+
+    public function ___render()
+    {
+        /** @var RecurringDateRule $recurring_dates */
+        $recurring_dates = $this->value;
+        
+        // Handle empty/null value
+        if (!$recurring_dates) {
+            $recurring_dates = new RecurringDateRule();
+        }
+        
+        $this->setAttribute('class', $this->getAttribute('class') . ' main-input uk-width-1-1');
+        //$occurrences = $recurring_dates->occurrences;
+
+        if($recurring_dates->rrule){
+            $rrule_array = $recurring_dates->rrule->getRule();
+
+            if ($this->startDateInput == "datetime") {
+                $rrule_array['DTSTART'] = (new \DateTime($rrule_array['DTSTART']))->format('Y-m-d H:i:s');
+            } else {
+                $rrule_array['DTSTART'] = (new \DateTime($rrule_array['DTSTART']))->format('Y-m-d');
+            }
+            if ($recurring_dates->rrule) {
+                $rule_json = json_encode($rrule_array);
+            }
+        }else{
+            $rule_json = null;
+        }
+        //bd($recurring_dates);
+
+        $this->setAttribute('class', 'uk-input main-input');
+        if ($rule_json) {
+            $this->setAttribute('value', [$rule_json]);
+        }
+        //$this->setAttribute('x-ref', 'main-input');
+        $this->setAttribute('data-main-input', 'true');
+        $this->setAttribute('x-model', '_rrule');
+        $this->setAttribute('data-rrule', $rule_json);
+        $this->setAttribute('type', 'hidden');
+        $this->setAttribute('data-settings', json_encode($recurring_dates->settings));
+
+        $out = "";
+        $filePath = "{$this->config->paths->siteModules}FieldtypeRecurringDates/partials/RecurringDatesRuleMarkup.php";
+        $alpineComponent = wireRenderFile($filePath, [
+          'fieldtype' => $this->hasFieldtype,
+          'inputfield' => $this,
+          //'occurrences' => $occurrences,
+          'inputfieldValue' => $recurring_dates
+        ]);
+
+        $out .= $alpineComponent;
+        return $out;
+    }
+
+
+    public function ___renderValue()
+    {
+        $fieldtype = $this->hasFieldtype;
+        return $fieldtype->markupValue($this->hasPage, $this->hasField, $this->value);
+    }
+
+    public function __getEventsUrl()
+    {
+
+    }
+
+    
+    public function ___processInput(WireInputData $input)
+    {
+        $name = $this->attr('name');
+        $recurring_date_obj = new RecurringDateRule();
+        $value = $input[$name];
+        
+        // Handle empty value
+        if ($value === "" || $value === null) {
+            $this->val($recurring_date_obj);
+            $this->trackChange('value');
+            return $this;
+        }
+        
+        $value = json_decode($value, true);
+        $settings = json_decode($input[$name . "_settings"], true);
+        
+        // Handle empty or invalid JSON, or missing rrule
+        if ($value === null || !isset($value['rrule']) || $value['rrule'] === null || empty($value['rrule'])) {
+            $this->val($recurring_date_obj);
+            $this->trackChange('value');
+            return $this;
+        }
+        
+        try{    
+            $recurring_date_obj->rrule = new RRule($value['rrule']);
+            //bd($recurring_date_obj->rrule);
+            $recurring_date_obj->settings = new RecurringDateRuleSettings($settings);
+        }catch(\Exception $e){
+            throw new WireException("Invalid RRule: " . $e->getMessage());
+        }
+    
+        $this->val($recurring_date_obj);
+        $this->trackChange('value');
+        return $this;
+
+    }
+
+    /**
+     * Get setting
+     *
+     * @param string $key
+     * @return mixed
+     *
+     */
+
+    public function getDateStartInputType()
+    {
+        switch ($this->startDateInput) {
+            case "datetime":
+                return "datetime-local";
+            default:
+                return "date";
+        }
+    }
+
+    /**
+     * Get the weekday the "Days of the week" list should start on
+     *
+     * @return string RRule weekday code, either 'MO' or 'SU'
+     *
+     */
+    public function getWeekStart()
+    {
+        return $this->weekStartsOn === 'SU' ? 'SU' : 'MO';
+    }
+
+    public function ___getConfigInputfields()
+    {
+        // Get the defaults and $inputfields wrapper we can add to
+        $inputfields = parent::___getConfigInputfields();
+        // Add a new Inputfield to it
+        $f = $this->modules->get('InputfieldInteger');
+        $f->attr('name', 'pageSize');
+        $f->label = $this->_('Page size');
+        $f->value = $this->pageSize;
+        $inputfields->add($f);
+
+        /** @var InputfieldSelect $f */
+        $f = $this->modules->get('InputfieldSelect');
+        $f->attr('name', 'startDateInput');
+        $f->label = $this->_("Input type for start date");
+        $f->addOptions([
+          'date' => $this->_('Date'),
+          'datetime' => $this->_('Both date and time')]);
+        //bd($this->startDateInput);
+        $f->val($this->getSetting('startDateInput'));
+
+        $inputfields->add($f);
+
+        /** @var InputfieldSelect $f */
+        $f = $this->modules->get('InputfieldSelect');
+        $f->attr('name', 'weekStartsOn');
+        $f->label = $this->_("First day of the week");
+        $f->description = $this->_("Day the 'Days of the week' list starts on.");
+        $f->addOptions([
+          'MO' => $this->_('Monday'),
+          'SU' => $this->_('Sunday')]);
+        $f->val($this->getWeekStart());
+
+        $inputfields->add($f);
+
+        /** @var InputfieldInteger $f */
+        $f = $this->modules->get('InputfieldInteger');
+        $f->attr('name', 'hardLimit');
+        $f->label = $this->_("Hard limit on the 'Never' option of the interface. Otherwise, the RRule calculation would run into an infinite loop");
+        $f->val($this->getSetting('hardLimit'));
+
+        $inputfields->add($f);
+
+        return $inputfields;
+    }
+
+}

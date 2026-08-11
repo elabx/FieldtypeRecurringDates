@@ -1,0 +1,59 @@
+.InputfieldRecurringDatesRule [x-cloak] { display: none !important; }
+
+.InputfieldRecurringDatesRule .bymonthday-filter-wrapper{
+    max-width: 280px;
+}
+
+.InputfieldRecurringDatesRule .bymonthday-grid-item{
+    width: calc(100% / 7);
+}
+
+.InputfieldRecurringDatesRule  .bymonthday-grid-item:nth-child(7n + 1) .bymonthday-wrapper{
+    border-left:1px solid #efefef;
+}
+.InputfieldRecurringDatesRule  .bymonthday-grid-item:nth-child(-n + 7) .bymonthday-wrapper{
+    border-top:1px solid #efefef;
+}
+
+.InputfieldRecurringDatesRule .bymonthday-wrapper{
+    border-right:1px solid #efefef;
+    border-bottom:1px solid #efefef;
+    width:40px;
+    height:40px;
+    display:block;
+    position:relative;
+    font-size:14px;
+}
+
+.InputfieldRecurringDatesRule .bymonthday-wrapper label{
+    line-height:40px;
+    text-align: center;
+    display:block;
+    position:relative;
+}
+.InputfieldRecurringDatesRule .bymonthday-wrapper .bymonth-checkbox-background{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+}
+
+.InputfieldRecurringDatesRule .bymonthday-wrapper input[type=checkbox]:checked + .bymonth-checkbox-background{
+    background-color:rgb(88,88,88);
+    color:white;
+}
+
+.InputfieldRecurringDatesRule .bymonthday-wrapper input[type=checkbox]{
+    width:30px;
+    height:30px;
+    display:block;
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    border:0;
+    opacity:0;
+    z-index:1;
+}
+

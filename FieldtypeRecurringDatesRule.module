@@ -1,0 +1,247 @@
+<?php namespace ProcessWire;
+
+use DateTime;
+use RRule\RRule;
+use ProcessWire\Field;
+use ProcessWire\Page;
+use ProcessWire\DatabaseQuerySelect;
+use ProcessWire\FieldtypeTextarea;
+
+
+class FieldtypeRecurringDatesRule extends FieldtypeTextarea
+{
+
+    /**
+     * Construct the Fieldtype, make sure all dependencies are in place
+     *
+     */
+
+    public function __construct()
+    {
+       
+        require_once(__DIR__ . '/RecurringDateRule.php');
+        require_once(__DIR__ . '/RecurringDateRuleSettings.php');
+        parent::__construct();
+    }
+
+    public function init(){
+        // pass true so the version string is filemtime based, otherwise it only
+        // changes when the core version does and edits stay cached in browsers
+        $urls = $this->config->versionUrls([
+            $this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.js',
+            $this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.css'
+        ], true);
+        $this->config->scripts->add($urls[0]);
+        $this->config->styles->add($urls[1]);
+    }
+
+    public function ready(){
+    }
+
+
+    public function getRruleOcurrences($value)
+    {
+        $rrule = new RRule($value);
+        return $rrule;
+    }
+
+    /**
+     * Return the database schema that defines an Occurrence
+     *
+     * @param Field $field
+     * @return array
+     *
+     */
+    public function getDatabaseSchema(Field $field)
+    {
+        $schema = parent::getDatabaseSchema($field);
+        $schema['data'] = 'JSON NULL';
+        return $schema;
+    }
+
+    /**
+     * Return the Inputfield used to collect input for a field of this type
+     *
+     * @param Page $page
+     * @param Field $field
+     * @return Inputfield|InputfieldRecurringDates
+     *
+     */
+    public function getInputfield(Page $page, Field $field)
+    {
+        $inputfield = $this->modules->get('InputfieldRecurringDatesRule');
+        /** @var InputfieldRecurringDates $inputfield */
+        return $inputfield;
+    }
+
+    /**
+     * Return a blank ready-to-populate value
+     *
+     * @param Page $page
+     * @param Field $field
+     * @return RecurringDate
+     *
+     */
+    public function getBlankValue(Page $page, Field $field)
+    {
+        return new RecurringDateRule();
+    }
+
+    /**
+     * Given a value, make it clean and of the correct type for storage within a Page
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param EventArray $value
+     * @return mixed
+     *
+     */
+    public function sanitizeValue(Page $page, Field $field, $value)
+    {
+        // if given an invalid value, return a valid blank value
+        return $value;
+    }
+
+    protected function isSettingsValue($value)
+    {
+        $count = 0;
+        $keys = self::EXTRAS_TABLE_COLS;
+        foreach ($keys as $key) {
+            if (isset($value[$key]) || array_key_exists($key, $value)) {
+                $count++;
+            }
+        }
+
+        if ($count == 3) {
+            return true;
+        } else {
+            return false;
+        }
+        //if(array_key_exists(''))
+    }
+
+    
+    
+
+    /**
+     * Prepare a value for storage in the database
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param mixed $value
+     * @return string
+     *
+     */
+    public function ___sleepValue(Page $page, Field $field, $value)
+    {
+
+        if (!$value instanceof RecurringDateRule) {
+            return json_encode(null);
+        }
+        //bd((string) $value);
+        $rrule = $value->get('rrule');
+
+        $rruleData = null;
+        if ($rrule instanceof RRule) {
+            $rruleData = $rrule->getRule();
+        }
+        
+        $data = array(
+            'rrule' => $rruleData,
+            'settings' => $value->settings
+        );
+        //bd($data);
+
+        return json_encode($data);
+    }
+
+    public function ___wakeupValue(Page $page, Field $field, $value)
+    {
+
+        
+        $value = json_decode($value, true);
+
+        $recurring_date = $this->getBlankValue($page, $field);
+        
+        if (empty($value)) {
+            return $recurring_date;
+        }
+
+        $recurring_date->settings = $value['settings'];
+        //bd($recurring_date);
+        if (!empty($value['rrule'])) {
+            $rrule = new RRule($value['rrule']);
+            $recurring_date->set('rrule', $rrule);
+        }
+        //return null;
+        //bd($recurring_date);
+        return $recurring_date;
+    }
+
+    /**
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param array $value
+     * @return array
+     *
+     */
+
+
+    /**
+     * Render a markup string of the value (optional for Fieldtypes to implement)
+     *
+     * @param Page $page
+     * @param Field $field
+     * @param EventArray $value
+     * @param string $property Property to render or omit for all
+     * @return string|MarkupFieldtype
+     *
+     */
+
+    public function ___markupValue(Page $page, Field $field, $value = null, $property = '')
+    {
+        return $value;
+    }
+
+    public function getMonths()
+    {
+        $months = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $months[] = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+        }
+        return $months;
+    }
+
+    public function getLoadQuery(Field $field, DatabaseQuerySelect $query)
+    {
+
+        return parent::getLoadQuery($field, $query);
+    }
+
+    /*
+     * TODO Implement properly.
+     * Known issue is blank value on selector throws an error. Normal date
+     * fields don't do this, so predictable behaviour like existing fields is desired
+     */
+    public function isEmptyValue(Field $field, $value) {
+       return true;
+    }
+    
+
+
+    /**
+     * Get selector info
+     *
+     * @param Field $field
+     * @param array $data
+     * @return array
+     *
+     */
+    public function ___getSelectorInfo(Field $field, array $data = array()) {
+        $a = parent::___getSelectorInfo($field, $data);
+        $a['operators'] = array('=', '!=', '>', '>=', '<', '<=', '%=', '^=', '=""', '!=""');
+        return $a;
+    }
+
+}
