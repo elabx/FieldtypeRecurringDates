@@ -25,10 +25,12 @@ class FieldtypeRecurringDatesRule extends FieldtypeTextarea
     }
 
     public function init(){
+        // pass true so the version string is filemtime based, otherwise it only
+        // changes when the core version does and edits stay cached in browsers
         $urls = $this->config->versionUrls([
-            $this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.js?v=123',
+            $this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.js',
             $this->config->urls->siteModules . 'FieldtypeRecurringDates/InputfieldRecurringDatesRule.css'
-        ]);
+        ], true);
         $this->config->scripts->add($urls[0]);
         $this->config->styles->add($urls[1]);
     }

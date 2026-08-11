@@ -15,7 +15,7 @@ class InputfieldRecurringDatesRule extends Inputfield
     {
         return array(
           'title' => 'Recurring Dates Rule',
-          'version' => 002,
+          'version' => 3,
           'summary' => 'Field that lets you define a recurring date rule.',
           'icon' => 'calendar-o',
           'requires' => 'AlpineJS'
@@ -31,6 +31,7 @@ class InputfieldRecurringDatesRule extends Inputfield
     {
         // Load Alpine.js in <header>
         $this->set('startDateInput', 'date');
+        $this->set('weekStartsOn', 'MO');
         $this->modules->AlpineJS;
     }
 
@@ -155,6 +156,17 @@ class InputfieldRecurringDatesRule extends Inputfield
         }
     }
 
+    /**
+     * Get the weekday the "Days of the week" list should start on
+     *
+     * @return string RRule weekday code, either 'MO' or 'SU'
+     *
+     */
+    public function getWeekStart()
+    {
+        return $this->weekStartsOn === 'SU' ? 'SU' : 'MO';
+    }
+
     public function ___getConfigInputfields()
     {
         // Get the defaults and $inputfields wrapper we can add to
@@ -175,6 +187,18 @@ class InputfieldRecurringDatesRule extends Inputfield
           'datetime' => $this->_('Both date and time')]);
         //bd($this->startDateInput);
         $f->val($this->getSetting('startDateInput'));
+
+        $inputfields->add($f);
+
+        /** @var InputfieldSelect $f */
+        $f = $this->modules->get('InputfieldSelect');
+        $f->attr('name', 'weekStartsOn');
+        $f->label = $this->_("First day of the week");
+        $f->description = $this->_("Day the 'Days of the week' list starts on.");
+        $f->addOptions([
+          'MO' => $this->_('Monday'),
+          'SU' => $this->_('Sunday')]);
+        $f->val($this->getWeekStart());
 
         $inputfields->add($f);
 

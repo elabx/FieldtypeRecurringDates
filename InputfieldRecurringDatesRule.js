@@ -24,13 +24,13 @@ document.addEventListener('alpine:init', (e) => {
                     {label: "Days of the month", value: 'BYMONTHDAY'},
                 ],
                 daysOfWeek: [
-                    {name: 'Sunday', value: 'SU'},
                     {name: 'Monday', value: 'MO'},
                     {name: 'Tuesday', value: 'TU'},
                     {name: 'Wednesday', value: 'WE'},
                     {name: 'Thursday', value: 'TH'},
                     {name: 'Friday', value: 'FR'},
                     {name: 'Saturday', value: 'SA'},
+                    {name: 'Sunday', value: 'SU'},
                 ],
             },
 
@@ -39,6 +39,7 @@ document.addEventListener('alpine:init', (e) => {
                 this.pageId = parseInt(this.$el.dataset.pageId);
                 this.fieldId = parseInt(this.$el.dataset.fieldId)
                 this.hard_limit = parseInt(this.$el.dataset.hardLimit)
+                this.setWeekStart(this.$el.dataset.weekStart);
 
                 this.$watch('rrule', (prop) => {
                     this.saveString();
@@ -83,6 +84,15 @@ document.addEventListener('alpine:init', (e) => {
                 }
             },
 
+
+            // Rotate the days of the week list so it begins on the configured day
+            setWeekStart: function (weekStart) {
+                var days = this.catalogues.daysOfWeek;
+                var startIndex = days.findIndex(day => day.value === weekStart);
+                if (startIndex > 0) {
+                    this.catalogues.daysOfWeek = days.slice(startIndex).concat(days.slice(0, startIndex));
+                }
+            },
 
             is_filtering: function (filter) {
                 if (this.rrule[filter] !== null || this.rrule[filter] !== undefined) {

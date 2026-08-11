@@ -7,6 +7,7 @@
 <div data-page-id="<?= $inputfield->hasPage->id ?>"
      data-field-id="<?= $inputfield->hasField->id ?>"
      data-inputfield-name="<?= $inputfield->name ?>"
+     data-week-start="<?= $inputfield->getWeekStart() ?>"
      x-data="recurringDatesRuleInput">
     <input <?= $inputfield->getAttributesString() ?>>
     <input x-model="_settings" type="hidden" name="<?= $inputfield->name ?>_settings">
